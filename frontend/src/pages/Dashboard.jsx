@@ -5,7 +5,7 @@ import CameraView from '../components/CameraView'
 import EStop from '../components/EStop'
 import Teleop from '../components/Teleop'
 import NavGoalForm from '../components/NavGoalForm'
-import clsx from 'clsx'
+
 
 const RAD_TO_DEG = 180 / Math.PI
 
@@ -56,12 +56,12 @@ function LeftNav({ active, onChange }) {
         paddingTop: '8px',
       }}
     >
-      {NAV_ITEMS.map(({ id, label, Icon }) => {
-        const isActive = active === id
+      {NAV_ITEMS.map((item) => {
+        const isActive = active === item.id
         return (
           <button
-            key={id}
-            onClick={() => onChange(id)}
+            key={item.id}
+            onClick={() => onChange(item.id)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -87,8 +87,8 @@ function LeftNav({ active, onChange }) {
               if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
             }}
           >
-            <Icon />
-            {label}
+            {item.Icon()}
+            {item.label}
           </button>
         )
       })}
@@ -183,7 +183,7 @@ function RightPanel({ behavior, robotOnline, notifications }) {
 
 // ── Sensor view ──────────────────────────────────────────
 function SensorView({ telemetry }) {
-  const { behavior, battery, speed, odom, cpuTemp } = telemetry
+  const { battery, speed, odom, cpuTemp } = telemetry
   const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
 
   function batteryColor(v) {
@@ -295,11 +295,12 @@ export default function Dashboard({ token, onLogout }) {
   const prevBehavior  = useRef(null)
   const prevRobot     = useRef(null)
   const prevVehicle   = useRef(null)
-  const uptimeStart   = useRef(Date.now())
+  const uptimeStart   = useRef(null)
   const [uptime, setUptime] = useState('0m')
 
   // Uptime counter
   useEffect(() => {
+    uptimeStart.current = Date.now()
     const id = setInterval(() => {
       setUptime(Math.floor((Date.now() - uptimeStart.current) / 60000) + 'm')
     }, 10000)

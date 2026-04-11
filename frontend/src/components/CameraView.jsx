@@ -149,9 +149,6 @@ const CAMERAS = [
 export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCount, uptime }) {
   const [primaryCam, setPrimaryCam] = useState('ares2')
 
-  const stateColors = { PATROL: '#2a7d4f', ALERT: '#c47d0e', ESTOP: '#d63c2a', UNKNOWN: '#8896ab' }
-  const stateColor = stateColors[behavior] || stateColors.UNKNOWN
-
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#dde3ee', gap: '1px' }}>
 
