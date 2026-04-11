@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ares-relay
+    runtime: docker
+    rootDir: relay
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: PASSWORD_HASH
+        sync: false   # set manually in Render dashboard — bcrypt hash of your operator password
+      - key: JWT_SECRET
+        sync: false   # set manually — random 32+ byte hex string
+      - key: ROBOT_SECRET
+        sync: false   # set manually — token the Pi bridge uses to authenticate
+      - key: PORT
+        value: 8080
