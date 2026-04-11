@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+
+  --color-navy:     #1B3A6B;
+  --color-navy-mid: #24508f;
+  --color-gold:     #F5C200;
+  --color-bg:       #f4f6fb;
+  --color-surface:  #ffffff;
+  --color-border:   #dde3ee;
+  --color-border-dark: #bdc8dc;
+  --color-text:     #1a1917;
+  --color-mid:      #4a5568;
+  --color-dim:      #8896ab;
+  --color-red:      #d63c2a;
+  --color-amber:    #c47d0e;
+  --color-green:    #2a7d4f;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.85; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slidein {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: #f4f6fb;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
