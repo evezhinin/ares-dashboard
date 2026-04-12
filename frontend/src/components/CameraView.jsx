@@ -145,9 +145,9 @@ function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, whepUrl }) 
 }
 
 const CAMERAS = [
-  { id: 'front', label: 'Front', whepKey: 'VITE_CAMERA_FRONT_WHEP_URL' },
-  { id: 'rear', label: 'Rear', whepKey: 'VITE_CAMERA_REAR_WHEP_URL' },
-  { id: 'side', label: 'Side', whepKey: 'VITE_CAMERA_SIDE_WHEP_URL' },
+  { id: 'front', label: 'Front', whepKey: 'VITE_FRONT_WHEP_URL' },
+  { id: 'rear', label: 'Rear', whepKey: 'VITE_REAR_WHEP_URL' },
+  { id: 'side', label: 'Side', whepKey: 'VITE_SIDE_WHEP_URL' },
 ]
 
 export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCount, uptime }) {
