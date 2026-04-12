@@ -8,6 +8,145 @@ import NavGoalForm from '../components/NavGoalForm'
 
 
 const RAD_TO_DEG = 180 / Math.PI
+const DETECTION_ALERT_PRIORITY = {
+  stopped_vehicle: 3,
+  obstruction: 2,
+  person: 1,
+}
+
+function isEmergencyBehavior(behavior) {
+  return behavior === 'ESTOP' || behavior === 'EMERGENCY_STOP'
+}
+
+function isAlertBehavior(behavior) {
+  return behavior === 'ALERT' || behavior === 'OBSTRUCTION_ALERT' || behavior === 'STOPPED_VEHICLE_ALERT'
+}
+
+function formatObstructionDetail(obstruction) {
+  const parts = []
+  if (obstruction.direction) parts.push(`Dir: ${obstruction.direction}`)
+  if (obstruction.distanceM != null) parts.push(`Dist: ${obstruction.distanceM}m`)
+  if (obstruction.durationSec != null) parts.push(`For: ${obstruction.durationSec}s`)
+  return parts.length > 0 ? parts.join(' | ') : 'Obstacle detected in travel path'
+}
+
+function formatPersonDetail(persons) {
+  const cameras = Array.isArray(persons.cameras)
+    ? persons.cameras
+        .map((camera) => (typeof camera === 'string' ? camera : camera?.camera))
+        .filter(Boolean)
+    : []
+  return cameras.length > 0
+    ? `Cameras: ${cameras.join(', ')}`
+    : 'Confirmed person alert'
+}
+
+function getBannerAlert(activeAlerts, telemetry) {
+  const rankedAlert = [...activeAlerts]
+    .filter((alert) => DETECTION_ALERT_PRIORITY[alert.category])
+    .sort(
+      (a, b) =>
+        DETECTION_ALERT_PRIORITY[b.category] -
+        DETECTION_ALERT_PRIORITY[a.category],
+    )[0]
+
+  if (rankedAlert) return rankedAlert
+
+  if (telemetry.stoppedVehicle) {
+    return {
+      category: 'stopped_vehicle',
+      level: 'warning',
+      title: 'Stopped vehicle detected',
+      detail:
+        telemetry.stoppedVehicleCount > 0
+          ? `Count: ${telemetry.stoppedVehicleCount}`
+          : 'Confirmed stopped vehicle alert',
+    }
+  }
+
+  if (telemetry.obstruction.active) {
+    return {
+      category: 'obstruction',
+      level: 'warning',
+      title: 'Obstruction detected',
+      detail: formatObstructionDetail(telemetry.obstruction),
+    }
+  }
+
+  if (telemetry.persons.active) {
+    return {
+      category: 'person',
+      level: 'warning',
+      title: 'Person detected',
+      detail: formatPersonDetail(telemetry.persons),
+    }
+  }
+
+  return null
+}
+
+function notificationTypeForBehavior(behavior) {
+  if (isEmergencyBehavior(behavior)) return 'danger'
+  if (isAlertBehavior(behavior)) return 'vehicle'
+  return 'clear'
+}
+
+function notificationTypeForAlert(alert) {
+  if (!alert.active) return 'clear'
+  if (alert.category === 'stopped_vehicle') return 'vehicle'
+  return alert.level === 'error' ? 'danger' : 'vehicle'
+}
+
+function getBannerTone(alert) {
+  if (alert.category === 'stopped_vehicle') {
+    return { background: '#c47d0e', border: '#9b620c', color: '#ffffff' }
+  }
+
+  if (alert.level === 'error') {
+    return { background: '#d63c2a', border: '#ad2f22', color: '#ffffff' }
+  }
+
+  return { background: '#1B3A6B', border: '#163360', color: '#ffffff' }
+}
+
+function DetectionBanner({ alert }) {
+  const tone = getBannerTone(alert)
+
+  return (
+    <div
+      style={{
+        background: tone.background,
+        color: tone.color,
+        borderBottom: `1px solid ${tone.border}`,
+        padding: '10px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        flexWrap: 'wrap',
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', opacity: 0.8 }}>
+          Detection alert
+        </span>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          {alert.title}
+        </span>
+        {alert.detail && (
+          <span style={{ fontSize: '12px', lineHeight: 1.4, opacity: 0.9 }}>
+            {alert.detail}
+          </span>
+        )}
+      </div>
+
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.75 }}>
+        {alert.category.replace(/_/g, ' ')}
+      </span>
+    </div>
+  )
+}
 
 // ── Icons ────────────────────────────────────────────────
 function IconCamera() {
@@ -101,7 +240,10 @@ function RightPanel({ behavior, robotOnline, notifications }) {
   const stateColors = {
     PATROL:  '#2a7d4f',
     ALERT:   '#c47d0e',
+    OBSTRUCTION_ALERT: '#c47d0e',
+    STOPPED_VEHICLE_ALERT: '#c47d0e',
     ESTOP:   '#d63c2a',
+    EMERGENCY_STOP: '#d63c2a',
     UNKNOWN: '#8896ab',
   }
   const color = stateColors[behavior] || stateColors.UNKNOWN
@@ -282,7 +424,15 @@ function useClock() {
 
 // ── Dashboard ────────────────────────────────────────────
 export default function Dashboard({ token, onLogout }) {
-  const { relayOnline, robotOnline, telemetry, send } = useRobotSocket(token, onLogout)
+  const {
+    relayOnline,
+    robotOnline,
+    telemetry,
+    activeAlerts,
+    latestAlertEvent,
+    hasAlertFeed,
+    send,
+  } = useRobotSocket(token, onLogout)
   const clock = useClock()
 
   const [activeView,    setActiveView]    = useState('camera')
@@ -295,6 +445,7 @@ export default function Dashboard({ token, onLogout }) {
   const prevBehavior  = useRef(null)
   const prevRobot     = useRef(null)
   const prevVehicle   = useRef(null)
+  const prevAlertEventId = useRef(null)
   const uptimeStart   = useRef(null)
   const [uptime, setUptime] = useState('0m')
 
@@ -318,13 +469,16 @@ export default function Dashboard({ token, onLogout }) {
   // Watch telemetry for notification triggers
   useEffect(() => {
     if (telemetry.behavior && telemetry.behavior !== prevBehavior.current) {
-      if (prevBehavior.current !== null) {
-        const colors = { ESTOP: 'danger', ALERT: 'vehicle', PATROL: 'clear' }
-        addNotif(colors[telemetry.behavior] || 'clear', `State → ${telemetry.behavior}`, 'Behavior state changed')
+      if (prevBehavior.current !== null && !(telemetry.behavior === 'UNKNOWN' && !robotOnline)) {
+        addNotif(
+          notificationTypeForBehavior(telemetry.behavior),
+          `State → ${telemetry.behavior}`,
+          'Behavior state changed',
+        )
       }
       prevBehavior.current = telemetry.behavior
     }
-  }, [telemetry.behavior, addNotif])
+  }, [robotOnline, telemetry.behavior, addNotif])
 
   useEffect(() => {
     if (prevRobot.current !== null && prevRobot.current !== robotOnline) {
@@ -334,6 +488,16 @@ export default function Dashboard({ token, onLogout }) {
   }, [robotOnline, addNotif])
 
   useEffect(() => {
+    if (hasAlertFeed) {
+      prevVehicle.current = telemetry.stoppedVehicle
+      return
+    }
+
+    if (!robotOnline) {
+      prevVehicle.current = telemetry.stoppedVehicle
+      return
+    }
+
     if (prevVehicle.current !== null && prevVehicle.current !== telemetry.stoppedVehicle) {
       if (telemetry.stoppedVehicle) {
         addNotif('vehicle', 'Stopped vehicle detected', `Count: ${telemetry.stoppedVehicleCount}`)
@@ -342,7 +506,18 @@ export default function Dashboard({ token, onLogout }) {
       }
     }
     prevVehicle.current = telemetry.stoppedVehicle
-  }, [telemetry.stoppedVehicle, telemetry.stoppedVehicleCount, addNotif])
+  }, [hasAlertFeed, robotOnline, telemetry.stoppedVehicle, telemetry.stoppedVehicleCount, addNotif])
+
+  useEffect(() => {
+    if (!latestAlertEvent || latestAlertEvent.id === prevAlertEventId.current) return
+
+    addNotif(
+      notificationTypeForAlert(latestAlertEvent),
+      latestAlertEvent.title,
+      latestAlertEvent.detail || (latestAlertEvent.active ? 'Alert active' : 'Alert cleared'),
+    )
+    prevAlertEventId.current = latestAlertEvent.id
+  }, [latestAlertEvent, addNotif])
 
   const wrappedSend = useCallback((msg) => {
     send(msg)
@@ -360,12 +535,13 @@ export default function Dashboard({ token, onLogout }) {
   }
 
   const isLive = relayOnline && robotOnline
+  const bannerAlert = getBannerAlert(activeAlerts, telemetry)
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* E-Stop emergency bar */}
-      {telemetry.behavior === 'ESTOP' && (
+      {(telemetry.safetyStop || isEmergencyBehavior(telemetry.behavior)) && (
         <div style={{
           background: '#d63c2a',
           color: '#fff',
@@ -381,6 +557,8 @@ export default function Dashboard({ token, onLogout }) {
           ⚠ Emergency Stop Active
         </div>
       )}
+
+      {bannerAlert && <DetectionBanner alert={bannerAlert} />}
 
       {/* Header */}
       <header style={{

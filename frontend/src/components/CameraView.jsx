@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
+function isEmergencyBehavior(behavior) {
+  return behavior === 'ESTOP' || behavior === 'EMERGENCY_STOP'
+}
+
 // WebRTC feed for a single camera slot
 function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, whepUrl }) {
   const videoRef = useRef(null)
@@ -141,13 +145,13 @@ function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, whepUrl }) 
 }
 
 const CAMERAS = [
-  { id: 'ares2', label: 'Front · ares2', whepKey: 'VITE_WHEP_URL' },
-  { id: 'rear',  label: 'Rear',          whepKey: null },
-  { id: 'side',  label: 'Side',          whepKey: null },
+  { id: 'front', label: 'Front', whepKey: 'VITE_CAMERA_FRONT_WHEP_URL' },
+  { id: 'rear', label: 'Rear', whepKey: 'VITE_CAMERA_REAR_WHEP_URL' },
+  { id: 'side', label: 'Side', whepKey: 'VITE_CAMERA_SIDE_WHEP_URL' },
 ]
 
 export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCount, uptime }) {
-  const [primaryCam, setPrimaryCam] = useState('ares2')
+  const [primaryCam, setPrimaryCam] = useState('front')
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#dde3ee', gap: '1px' }}>
@@ -188,7 +192,7 @@ export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCou
         height: '36px', gap: '20px', flexShrink: 0,
       }}>
         {[
-          { label: 'State',    value: behavior || '—',                     danger: behavior === 'ESTOP' },
+          { label: 'State', value: behavior || '—', danger: isEmergencyBehavior(behavior) },
           { label: 'Vehicles', value: stoppedVehicle ? String(stoppedVehicleCount) : '0', danger: stoppedVehicle },
           { label: 'Uptime',   value: uptime },
         ].map((s, i) => (
