@@ -75,6 +75,23 @@ export default function SensorView({ telemetry }) {
     )
   }
 
+  function renderInternalGroupedSection(label, value, unit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          {label}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
+          <StatusCard label="Front-End" value={formatSensor(value, unit)} />
+          <StatusCard label="Back End" value={formatSensor(value, unit)} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
+          <StatusCard label="Visual Comparison" value={formatSensor(value, unit)} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '3px', textTransform: 'uppercase' }}>
@@ -100,9 +117,9 @@ export default function SensorView({ telemetry }) {
             Internal Sensors
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-            {renderInternalSection('Temperature', internalTemperature, '°C')}
-            {renderInternalSection('Humidity', internalHumidity, '%')}
-            {renderInternalSection('Carbon Dioxide', internalCarbonDioxide, ' ppm')}
+            {renderInternalGroupedSection('Temperature', internalTemperature, '°C')}
+            {renderInternalGroupedSection('Humidity', internalHumidity, '%')}
+            {renderInternalGroupedSection('Carbon Dioxide', internalCarbonDioxide, ' ppm')}
             {renderInternalSection('Speaker', speaker, '')}
             {renderInternalSection('Fans', fans, '')}
           </div>
