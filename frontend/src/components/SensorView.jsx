@@ -19,8 +19,26 @@ function tempColor(v) {
 // Props: telemetry – the telemetry object from useRobotSocket
 //   { battery, speed, odom: { x, y, heading }, cpuTemp }
 export default function SensorView({ telemetry }) {
-  const { battery, speed, odom, cpuTemp } = telemetry
+  const {
+    battery,
+    speed,
+    odom,
+    cpuTemp,
+    temperature,
+    humidity,
+    carbonDioxide,
+    carbonMonoxide,
+    ammonia,
+    nitricOxide,
+    acoustic,
+  } = telemetry
+
   const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
+
+  function formatSensor(value, unit = '') {
+    if (value == null) return '—'
+    return typeof value === 'number' ? `${value.toFixed(1)}${unit}` : `${value}${unit}`
+  }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -33,10 +51,13 @@ export default function SensorView({ telemetry }) {
             External Sensors
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
-            <StatusCard label="Speed"      value={speed    != null ? `${speed.toFixed(2)} m/s`     : '—'} />
-            <StatusCard label="Position X" value={odom.x   != null ? `${odom.x.toFixed(3)} m`      : '—'} />
-            <StatusCard label="Position Y" value={odom.y   != null ? `${odom.y.toFixed(3)} m`      : '—'} />
-            <StatusCard label="Heading"    value={headingDeg != null ? `${headingDeg}°`            : '—'} />
+            <StatusCard label="Temperature"      value={formatSensor(temperature, '°C')} />
+            <StatusCard label="Humidity"         value={formatSensor(humidity, '%')} />
+            <StatusCard label="Carbon Dioxide"   value={formatSensor(carbonDioxide, ' ppm')} />
+            <StatusCard label="Carbon Monoxide"  value={formatSensor(carbonMonoxide, ' ppm')} />
+            <StatusCard label="Ammonia"          value={formatSensor(ammonia, ' ppm')} />
+            <StatusCard label="Nitric Oxide"     value={formatSensor(nitricOxide, ' ppm')} />
+            <StatusCard label="Acoustic"         value={formatSensor(acoustic, ' dB')} />
           </div>
         </div>
         <div>
