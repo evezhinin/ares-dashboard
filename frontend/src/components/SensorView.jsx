@@ -40,6 +40,23 @@ export default function SensorView({ telemetry }) {
     return typeof value === 'number' ? `${value.toFixed(1)}${unit}` : `${value}${unit}`
   }
 
+  function renderExternalSection(label, value, unit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          {label}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
+          <StatusCard label="Front-End" value={formatSensor(value, unit)} />
+          <StatusCard label="Back End" value={formatSensor(value, unit)} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
+          <StatusCard label="Visual Comparison" value={formatSensor(value, unit)} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '3px', textTransform: 'uppercase' }}>
@@ -50,14 +67,14 @@ export default function SensorView({ telemetry }) {
           <h3 style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#1a1917', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
             External Sensors
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
-            <StatusCard label="Temperature"      value={formatSensor(temperature, '°C')} />
-            <StatusCard label="Humidity"         value={formatSensor(humidity, '%')} />
-            <StatusCard label="Carbon Dioxide"   value={formatSensor(carbonDioxide, ' ppm')} />
-            <StatusCard label="Carbon Monoxide"  value={formatSensor(carbonMonoxide, ' ppm')} />
-            <StatusCard label="Ammonia"          value={formatSensor(ammonia, ' ppm')} />
-            <StatusCard label="Nitric Oxide"     value={formatSensor(nitricOxide, ' ppm')} />
-            <StatusCard label="Acoustic"         value={formatSensor(acoustic, ' dB')} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            {renderExternalSection('Temperature', temperature, '°C')}
+            {renderExternalSection('Humidity', humidity, '%')}
+            {renderExternalSection('Carbon Dioxide', carbonDioxide, ' ppm')}
+            {renderExternalSection('Carbon Monoxide', carbonMonoxide, ' ppm')}
+            {renderExternalSection('Ammonia', ammonia, ' ppm')}
+            {renderExternalSection('Nitric Oxide', nitricOxide, ' ppm')}
+            {renderExternalSection('Acoustic', acoustic, ' dB')}
           </div>
         </div>
         <div>
