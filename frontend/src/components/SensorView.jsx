@@ -31,6 +31,11 @@ export default function SensorView({ telemetry }) {
     ammonia,
     nitricOxide,
     acoustic,
+    internalTemperature,
+    internalHumidity,
+    internalCarbonDioxide,
+    speaker,
+    fans,
   } = telemetry
 
   const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
@@ -52,6 +57,19 @@ export default function SensorView({ telemetry }) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
           <StatusCard label="Visual Comparison" value={formatSensor(value, unit)} />
+        </div>
+      </div>
+    )
+  }
+
+  function renderInternalSection(label, value, unit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          {label}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
+          <StatusCard label={label} value={formatSensor(value, unit)} />
         </div>
       </div>
     )
@@ -81,9 +99,12 @@ export default function SensorView({ telemetry }) {
           <h3 style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#1a1917', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
             Internal Sensors
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
-            <StatusCard label="Battery"    value={battery  != null ? `${battery.toFixed(1)}%`     : '—'} color={batteryColor(battery)} />
-            <StatusCard label="CPU Temp"   value={cpuTemp  != null ? `${cpuTemp.toFixed(1)}°C`     : '—'} color={tempColor(cpuTemp)} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            {renderInternalSection('Temperature', internalTemperature, '°C')}
+            {renderInternalSection('Humidity', internalHumidity, '%')}
+            {renderInternalSection('Carbon Dioxide', internalCarbonDioxide, ' ppm')}
+            {renderInternalSection('Speaker', speaker, '')}
+            {renderInternalSection('Fans', fans, '')}
           </div>
         </div>
       </div>
