@@ -37,6 +37,10 @@ export default function SensorView({ telemetry }) {
     speaker,
     fans,
     bodyExhaust,
+    hub1Intake,
+    hub1Exhaust,
+    hub2Intake,
+    hub2Exhaust,
   } = telemetry
 
   const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
@@ -116,13 +120,19 @@ export default function SensorView({ telemetry }) {
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Hub 1
             </div>
-            <StatusCard label="Hub 1" value={formatSensor(value, unit)} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
+              <StatusCard label="Intake" value={formatSensor(hub1Intake, unit)} />
+              <StatusCard label="Exhaust" value={formatSensor(hub1Exhaust, unit)} />
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Hub 2
             </div>
-            <StatusCard label="Hub 2" value={formatSensor(value, unit)} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
+              <StatusCard label="Intake" value={formatSensor(hub2Intake, unit)} />
+              <StatusCard label="Exhaust" value={formatSensor(hub2Exhaust, unit)} />
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
