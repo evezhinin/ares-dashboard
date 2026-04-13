@@ -124,15 +124,38 @@ export default function SensorView({ telemetry }) {
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Back Intake
             </div>
-            <StatusCard label="Back Intake" value={formatSensor(value, unit)} />
+            <div style={{ background: '#fff', padding: '18px 20px', minHeight: '140px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917' }}>
+                <span>Fan 4:</span>
+                <span>Fan 5:</span>
+                <span>Fan 6:</span>
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                {formatSensor(value, unit)}
+              </div>
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Hub 1
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
-              <StatusCard label="Intake" value={formatSensor(hub1Intake, unit)} />
-              <StatusCard label="Exhaust" value={formatSensor(hub1Exhaust, unit)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#fff', padding: '18px 20px', minHeight: '140px' }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917', letterSpacing: '2px' }}>
+                  Fan 7:
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                  {formatSensor(hub1Intake, unit)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#fff', padding: '18px 20px', minHeight: '140px' }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917', letterSpacing: '2px' }}>
+                  Fan 8:
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                  {formatSensor(hub1Exhaust, unit)}
+                </div>
+              </div>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -140,15 +163,39 @@ export default function SensorView({ telemetry }) {
               Hub 2
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee' }}>
-              <StatusCard label="Intake" value={formatSensor(hub2Intake, unit)} />
-              <StatusCard label="Exhaust" value={formatSensor(hub2Exhaust, unit)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#fff', padding: '18px 20px', minHeight: '140px' }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917', letterSpacing: '2px' }}>
+                  Fan 9:
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                  {formatSensor(hub2Intake, unit)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#fff', padding: '18px 20px', minHeight: '140px' }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917', letterSpacing: '2px' }}>
+                  Fan 10:
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                  {formatSensor(hub2Exhaust, unit)}
+                </div>
+              </div>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Body Exhaust
             </div>
-            <StatusCard label="Body Exhaust" value={formatSensor(bodyExhaust, unit)} />
+            <div style={{ background: '#fff', padding: '18px 20px', minHeight: '140px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917' }}>
+                <span>Fan 11:</span>
+                <span>Fan 12:</span>
+                <span>Fan 13:</span>
+                <span>Fan 14:</span>
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                {formatSensor(bodyExhaust, unit)}
+              </div>
+            </div>
           </div>
         </div>
       </div>
