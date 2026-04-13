@@ -109,7 +109,16 @@ export default function SensorView({ telemetry }) {
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
               Front Intake
             </div>
-            <StatusCard label="Front Intake" value={formatSensor(value, unit)} />
+            <div style={{ background: '#fff', padding: '18px 20px', minHeight: '140px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#1a1917' }}>
+                <span>Fan 1:</span>
+                <span>Fan 2:</span>
+                <span>Fan 3:</span>
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '18px', fontWeight: 500, color: '#1a1917' }}>
+                {formatSensor(value, unit)}
+              </div>
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
