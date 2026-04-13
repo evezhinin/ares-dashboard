@@ -16,6 +16,7 @@ function tempColor(v) {
   return '#2a7d4f'
 }
 
+
 // Props: telemetry – the telemetry object from useRobotSocket
 //   { battery, speed, odom: { x, y, heading }, cpuTemp }
 export default function SensorView({ telemetry }) {
@@ -73,7 +74,7 @@ export default function SensorView({ telemetry }) {
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
           {label}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '140px' }}>
           <StatusCard label={label} value={formatSensor(value, unit)} />
         </div>
       </div>
@@ -90,7 +91,7 @@ export default function SensorView({ telemetry }) {
           <StatusCard label="Front-End" value={formatSensor(value, unit)} />
           <StatusCard label="Back End" value={formatSensor(value, unit)} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '120px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#dde3ee', border: '1px solid #dde3ee', minHeight: '140px' }}>
           <StatusCard label="Visual Comparison" value={formatSensor(value, unit)} />
         </div>
       </div>
