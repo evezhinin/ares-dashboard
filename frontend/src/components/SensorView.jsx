@@ -36,6 +36,7 @@ export default function SensorView({ telemetry }) {
     internalCarbonDioxide,
     speaker,
     fans,
+    bodyExhaust,
   } = telemetry
 
   const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
@@ -92,6 +93,48 @@ export default function SensorView({ telemetry }) {
     )
   }
 
+  function renderFanSubsections(label, value, unit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+          {label}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              Front Intake
+            </div>
+            <StatusCard label="Front Intake" value={formatSensor(value, unit)} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              Back Intake
+            </div>
+            <StatusCard label="Back Intake" value={formatSensor(value, unit)} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              Hub 1
+            </div>
+            <StatusCard label="Hub 1" value={formatSensor(value, unit)} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              Hub 2
+            </div>
+            <StatusCard label="Hub 2" value={formatSensor(value, unit)} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#4a5568', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              Body Exhaust
+            </div>
+            <StatusCard label="Body Exhaust" value={formatSensor(bodyExhaust, unit)} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '3px', textTransform: 'uppercase' }}>
@@ -121,7 +164,7 @@ export default function SensorView({ telemetry }) {
             {renderInternalGroupedSection('Humidity', internalHumidity, '%')}
             {renderInternalGroupedSection('Carbon Dioxide', internalCarbonDioxide, ' ppm')}
             {renderInternalSection('Speaker', speaker, '')}
-            {renderInternalSection('Fans', fans, '')}
+            {renderFanSubsections('Fans', fans, '')}
           </div>
         </div>
       </div>
