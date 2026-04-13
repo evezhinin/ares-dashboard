@@ -259,11 +259,13 @@ export default function Dashboard({ token, onLogout }) {
           )}
         </div>
 
-        <RightPanel
-          behavior={telemetry.behavior}
-          robotOnline={robotOnline}
-          notifications={notifications}
-        />
+        {activeView === 'camera' && (
+          <RightPanel
+            behavior={telemetry.behavior}
+            robotOnline={robotOnline}
+            notifications={notifications}
+          />
+        )}
       </div>
     </div>
   )
