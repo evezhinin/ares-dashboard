@@ -4,23 +4,10 @@ function isEmergencyBehavior(behavior) {
   return behavior === 'ESTOP' || behavior === 'EMERGENCY_STOP'
 }
 
-// Derive the MediaMTX web player URL from the WHEP endpoint.
-// e.g. https://host:8443/front/whep  →  https://host/front/
-function playerUrl(whepUrl) {
-  try {
-    const u = new URL(whepUrl)
-    u.port = ''
-    u.pathname = u.pathname.replace(/\/whep$/, '/')
-    return u.toString()
-  } catch {
-    return null
-  }
-}
-
 const CAMERAS = [
-  { id: 'front', label: 'Front', whepUrl: import.meta.env.VITE_FRONT_WHEP_URL },
-  { id: 'rear',  label: 'Rear',  whepUrl: import.meta.env.VITE_REAR_WHEP_URL  },
-  { id: 'side',  label: 'Side',  whepUrl: import.meta.env.VITE_SIDE_WHEP_URL  },
+  { id: 'front', label: 'Front', src: import.meta.env.VITE_FRONT_PLAYER_URL },
+  { id: 'rear',  label: 'Rear',  src: import.meta.env.VITE_REAR_PLAYER_URL  },
+  { id: 'side',  label: 'Side',  src: import.meta.env.VITE_SIDE_PLAYER_URL  },
 ]
 
 function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, src }) {
@@ -70,6 +57,18 @@ function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, src }) {
         pointerEvents: 'none',
       }}>
         {label}
+      </div>
+
+      {/* Stream debug label */}
+      <div style={{
+        position: 'absolute', top: '28px', left: '10px', zIndex: 10,
+        fontFamily: "'DM Mono', monospace", fontSize: '8px', letterSpacing: '1px',
+        color: src ? 'rgba(127,255,163,0.8)' : 'rgba(255,179,179,0.9)',
+        textTransform: 'uppercase',
+        background: 'rgba(0,0,0,0.35)', padding: '2px 6px', backdropFilter: 'blur(4px)',
+        pointerEvents: 'none',
+      }}>
+        {src ? 'stream configured' : 'missing stream url'}
       </div>
 
       {/* Stopped-vehicle alert tag */}
@@ -123,7 +122,7 @@ export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCou
               isMain
               isActive={cam.id === primaryCam}
               stoppedVehicle={stoppedVehicle && cam.id === primaryCam}
-              src={playerUrl(cam.whepUrl)}
+              src={cam.src}
             />
           </div>
         ))}
@@ -139,7 +138,7 @@ export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCou
             isActive={primaryCam === cam.id}
             onClick={() => setPrimaryCam(cam.id)}
             stoppedVehicle={false}
-            src={playerUrl(cam.whepUrl)}
+            src={cam.src}
           />
         ))}
       </div>
