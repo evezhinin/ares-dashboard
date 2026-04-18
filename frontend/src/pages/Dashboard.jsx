@@ -185,12 +185,17 @@ export default function Dashboard({ token, onLogout }) {
         borderBottom: '1px solid #dde3ee',
         flexShrink: 0,
       }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '13px', fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: '#1a1917' }}>
-          A.R.E.<span style={{ color: '#F5C200' }}>S</span>
+        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+         <img
+           src="/ARES_blue_Wordmark.png"
+           alt="ARES"
+           style={{ height: '50px', width: 'auto', display: 'block' }}
+         />
         </div>
+        
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#8896ab', letterSpacing: '2px', textTransform: 'uppercase' }}>
-            Lincoln Tunnel · TBR-07
+            Lincoln Tunnel Command Center
           </span>
           <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '13px', color: '#4a5568', letterSpacing: '1px' }}>
             {clock}
