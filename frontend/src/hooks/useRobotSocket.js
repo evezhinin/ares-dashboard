@@ -259,6 +259,11 @@ export function useRobotSocket(token, onLogout) {
                 vehicles: nextStoppedVehicleVehicles,
               },
               cpuTemp: prev.cpuTemp,
+              sensors: {},
+              sound: {},
+              gas: {},
+              fans: {},
+              lights: {},
             }
           })
           return
@@ -277,6 +282,56 @@ export function useRobotSocket(token, onLogout) {
 
             return { ...prev, [alert.category]: alert }
           })
+          return
+        }
+
+        if (msg.type === 'sensor_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            sensors: { ...prev.sensors, [msg.sensor]: msg.data },
+          }))
+          return
+        }
+
+        if (msg.type === 'sound_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            sound: { ...prev.sound, [msg.sensor]: msg.data },
+          }))
+          return
+        }
+
+        if (msg.type === 'gas_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            gas: { ...prev.gas, [msg.sensor]: msg.data },
+          }))
+          return
+        }
+
+        if (msg.type === 'scd41_aggregate') {
+          setTelemetry((prev) => ({
+            ...prev,
+            scd41_aggregate: msg.data,
+          }))
+          return
+        }
+
+        if (msg.type === 'scd41_bays') {
+          setTelemetry((prev) => ({
+            ...prev,
+            scd41_bays: { ...prev.scd41_bays, ...msg.data },
+          }))
+          return
+        }
+
+        if (msg.type === 'fan_data') {
+          setTelemetry((prev) => ({ ...prev, fans: msg.data }))
+          return
+        }
+
+        if (msg.type === 'light_data') {
+          setTelemetry((prev) => ({ ...prev, lights: msg.data }))
           return
         }
 
