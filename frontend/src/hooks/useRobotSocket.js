@@ -96,6 +96,9 @@ export function useRobotSocket(token, onLogout) {
   useEffect(() => {
     if (!token) return
 
+    let disposed = false
+    let allowReconnect = true
+
     function resetRobotState() {
       setActiveAlerts({})
       setTelemetry((prev) => ({
@@ -116,24 +119,46 @@ export function useRobotSocket(token, onLogout) {
       }))
     }
 
+    function scheduleReconnect(connectFn) {
+      if (disposed || !allowReconnect) return
+      clearTimeout(reconnectTimer.current)
+      reconnectTimer.current = setTimeout(() => {
+        if (disposed || !allowReconnect) return
+        connectFn()
+      }, RECONNECT_DELAY)
+    }
+
+    function stopReconnect() {
+      allowReconnect = false
+      clearTimeout(reconnectTimer.current)
+    }
+
     function connect() {
+      if (disposed || !allowReconnect) return
       const url = `${import.meta.env.VITE_RELAY_WS}?token=${token}`
       const socket = new WebSocket(url)
       ws.current = socket
 
       socket.onopen = () => {
+        if (disposed || !allowReconnect) {
+          socket.close()
+          return
+        }
         setRelayOnline(true)
       }
 
       socket.onclose = () => {
+        if (ws.current === socket) ws.current = null
         setRelayOnline(false)
         setRobotOnline(false)
         resetRobotState()
-        reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY)
+        scheduleReconnect(connect)
       }
 
       socket.onerror = () => {
-        socket.close()
+        if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
+          socket.close()
+        }
       }
 
       socket.onmessage = (event) => {
@@ -260,70 +285,79 @@ export function useRobotSocket(token, onLogout) {
           return
         }
 
-            
-      // Handle scd41 data
-      if (msg.type === 'sensor_data') {
-        setTelemetry((prev) => ({
-          ...prev,
-          sensors: {
-            ...prev.sensors,
-            [msg.payload.sensor]: msg.payload.data,
-          },
-        }))
-        return
-      }
+        if (msg.type === 'sensor_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            sensors: { ...prev.sensors, [msg.sensor]: msg.data },
+          }))
+          return
+        }
 
-      // Handle sound data
-      if (msg.type === 'sound_data') {
-        setTelemetry((prev) => ({
-          ...prev,
-          sound: {
-            ...prev.sound,
-            [msg.payload.sensor]: msg.payload.data,
-          },
-        }))
-        return
-      }
+        if (msg.type === 'sound_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            sound: { ...prev.sound, [msg.sensor]: msg.data },
+          }))
+          return
+        }
 
-      // Handle gas data
-      if (msg.type === 'gas_data') {
-        setTelemetry((prev) => ({
-          ...prev,
-          gas: {
-            ...prev.gas,
-            [msg.payload.sensor]: msg.payload.data,
-          },
-        }))
-        return
-      }
+        if (msg.type === 'gas_data') {
+          setTelemetry((prev) => ({
+            ...prev,
+            gas: { ...prev.gas, [msg.sensor]: msg.data },
+          }))
+          return
+        }
 
-      if (msg.type === 'fan_data') {
-        setTelemetry((prev) => ({
-          ...prev,
-          fans: msg.payload, // Update fan data
-        }))
-        return
-      }
-    
-      if (msg.type === 'light_data') {
-        setTelemetry((prev) => ({
-          ...prev,
-          lights: msg.payload, // Update light data
-        }))
-        return
-      }
+        if (msg.type === 'scd41_aggregate') {
+          setTelemetry((prev) => ({
+            ...prev,
+            scd41_aggregate: msg.data,
+          }))
+          return
+        }
 
-      if (msg.type === 'auth_error') {
-        onLogout?.()
-      }
+        if (msg.type === 'scd41_bays') {
+          setTelemetry((prev) => ({
+            ...prev,
+            scd41_bays: { ...prev.scd41_bays, ...msg.data },
+          }))
+          return
+        }
+
+        if (msg.type === 'fan_data') {
+          setTelemetry((prev) => ({ ...prev, fans: msg.data }))
+          return
+        }
+
+        if (msg.type === 'light_data') {
+          setTelemetry((prev) => ({ ...prev, lights: msg.data }))
+          return
+        }
+
+        if (msg.type === 'auth_error') {
+          stopReconnect()
+          onLogout?.()
+          return
+        }
+
+        if (msg.type === 'relay.error') {
+          const code = msg.payload?.code ?? 'relay_error'
+          const message = msg.payload?.message ?? 'Unknown relay error'
+          console.warn(`[relay] ${code}: ${message}`)
+        }
       }
     }
 
     connect()
 
     return () => {
+      disposed = true
+      stopReconnect()
       clearTimeout(reconnectTimer.current)
-      ws.current?.close()
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.close()
+      }
     }
   }, [token, onLogout])
 
