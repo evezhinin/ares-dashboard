@@ -65,17 +65,6 @@ export default function Dashboard({ token, onLogout }) {
   const prevRobot        = useRef(null)
   const prevVehicle      = useRef(null)
   const prevAlertEventId = useRef(null)
-  const uptimeStart      = useRef(null)
-  const [uptime, setUptime] = useState('0m')
-
-  // Uptime counter
-  useEffect(() => {
-    uptimeStart.current = Date.now()
-    const id = setInterval(() => {
-      setUptime(Math.floor((Date.now() - uptimeStart.current) / 60000) + 'm')
-    }, 10000)
-    return () => clearInterval(id)
-  }, [])
 
   const addNotif = useCallback((type, title, detail) => {
     const n = new Date()
@@ -243,9 +232,6 @@ export default function Dashboard({ token, onLogout }) {
           {activeView === 'camera' && (
             <CameraView
               stoppedVehicle={telemetry.stoppedVehicle}
-              behavior={telemetry.behavior}
-              stoppedVehicleCount={telemetry.stoppedVehicleCount}
-              uptime={uptime}
             />
           )}
           {activeView === 'sensors' && (
