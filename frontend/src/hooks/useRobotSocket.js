@@ -234,6 +234,11 @@ export function useRobotSocket(token, onLogout) {
                 vehicles: nextStoppedVehicleVehicles,
               },
               cpuTemp: prev.cpuTemp,
+              sensors: {},
+              sound: {},
+              gas: {},
+              fans: {},
+              lights: {},
             }
           })
           return
@@ -255,9 +260,62 @@ export function useRobotSocket(token, onLogout) {
           return
         }
 
-        if (msg.type === 'auth_error') {
-          onLogout?.()
-        }
+            
+      // Handle scd41 data
+      if (msg.type === 'sensor_data') {
+        setTelemetry((prev) => ({
+          ...prev,
+          sensors: {
+            ...prev.sensors,
+            [msg.payload.sensor]: msg.payload.data,
+          },
+        }))
+        return
+      }
+
+      // Handle sound data
+      if (msg.type === 'sound_data') {
+        setTelemetry((prev) => ({
+          ...prev,
+          sound: {
+            ...prev.sound,
+            [msg.payload.sensor]: msg.payload.data,
+          },
+        }))
+        return
+      }
+
+      // Handle gas data
+      if (msg.type === 'gas_data') {
+        setTelemetry((prev) => ({
+          ...prev,
+          gas: {
+            ...prev.gas,
+            [msg.payload.sensor]: msg.payload.data,
+          },
+        }))
+        return
+      }
+
+      if (msg.type === 'fan_data') {
+        setTelemetry((prev) => ({
+          ...prev,
+          fans: msg.payload, // Update fan data
+        }))
+        return
+      }
+    
+      if (msg.type === 'light_data') {
+        setTelemetry((prev) => ({
+          ...prev,
+          lights: msg.payload, // Update light data
+        }))
+        return
+      }
+
+      if (msg.type === 'auth_error') {
+        onLogout?.()
+      }
       }
     }
 

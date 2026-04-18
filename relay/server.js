@@ -405,6 +405,18 @@ wss.on('connection', (ws, req) => {
       const normalized = normalizeRobotMessage(msg, robotId)
       if (!normalized) return
 
+      
+      // Handle specific message types for sensors and broadcast to the site 
+      if (msg.type === 'sensor_data' || msg.type === 'sound_data' || msg.type === 'gas_data' || msg.type === 'fan_data' || msg.type === 'light_data') {
+        broadcastToBrowsers({
+          type: msg.type,
+          robotId,
+          ts: nowIso(),
+          source: 'robot',
+          payload: msg.data,
+        })
+      }
+
       broadcastToBrowsers(normalized)
       for (const alias of legacyAliases(normalized)) {
         broadcastToBrowsers(alias)
