@@ -49,7 +49,10 @@ export default function Login({ onLogin }) {
               Operator Password
             </label> */}
             <input
+              id="operator-password"
+              name="operatorPassword"
               type="password"
+              autoComplete="current-password"
               placeholder="Enter access code"
               value={password}
               onChange={e => { setPassword(e.target.value); if (error) setError('') }}

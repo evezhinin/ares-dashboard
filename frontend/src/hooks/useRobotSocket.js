@@ -96,6 +96,9 @@ export function useRobotSocket(token, onLogout) {
   useEffect(() => {
     if (!token) return
 
+    let disposed = false
+    let allowReconnect = true
+
     function resetRobotState() {
       setActiveAlerts({})
       setTelemetry((prev) => ({
@@ -116,24 +119,46 @@ export function useRobotSocket(token, onLogout) {
       }))
     }
 
+    function scheduleReconnect(connectFn) {
+      if (disposed || !allowReconnect) return
+      clearTimeout(reconnectTimer.current)
+      reconnectTimer.current = setTimeout(() => {
+        if (disposed || !allowReconnect) return
+        connectFn()
+      }, RECONNECT_DELAY)
+    }
+
+    function stopReconnect() {
+      allowReconnect = false
+      clearTimeout(reconnectTimer.current)
+    }
+
     function connect() {
+      if (disposed || !allowReconnect) return
       const url = `${import.meta.env.VITE_RELAY_WS}?token=${token}`
       const socket = new WebSocket(url)
       ws.current = socket
 
       socket.onopen = () => {
+        if (disposed || !allowReconnect) {
+          socket.close()
+          return
+        }
         setRelayOnline(true)
       }
 
       socket.onclose = () => {
+        if (ws.current === socket) ws.current = null
         setRelayOnline(false)
         setRobotOnline(false)
         resetRobotState()
-        reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY)
+        scheduleReconnect(connect)
       }
 
       socket.onerror = () => {
-        socket.close()
+        if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
+          socket.close()
+        }
       }
 
       socket.onmessage = (event) => {
@@ -256,7 +281,15 @@ export function useRobotSocket(token, onLogout) {
         }
 
         if (msg.type === 'auth_error') {
+          stopReconnect()
           onLogout?.()
+          return
+        }
+
+        if (msg.type === 'relay.error') {
+          const code = msg.payload?.code ?? 'relay_error'
+          const message = msg.payload?.message ?? 'Unknown relay error'
+          console.warn(`[relay] ${code}: ${message}`)
         }
       }
     }
@@ -264,8 +297,12 @@ export function useRobotSocket(token, onLogout) {
     connect()
 
     return () => {
+      disposed = true
+      stopReconnect()
       clearTimeout(reconnectTimer.current)
-      ws.current?.close()
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.close()
+      }
     }
   }, [token, onLogout])
 
