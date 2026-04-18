@@ -6,6 +6,7 @@ import LeftNav from '../components/LeftNav'
 import RightPanel from '../components/RightPanel'
 import SensorView from '../components/SensorView'
 import ControlView from '../components/ControlView'
+import CommsView from '../components/CommsView'
 
 function isEmergencyBehavior(behavior) {
   return behavior === 'ESTOP' || behavior === 'EMERGENCY_STOP'
@@ -246,6 +247,12 @@ export default function Dashboard({ token, onLogout }) {
               estopActive={estopActive}
               handleEStop={handleEStop}
               lastCmd={lastCmd}
+            />
+          )}
+          {activeView === 'comms' && (
+            <CommsView
+              send={send}
+              relayOnline={relayOnline}
             />
           )}
         </div>

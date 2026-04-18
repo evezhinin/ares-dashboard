@@ -10,6 +10,7 @@ const {
   JWT_SECRET,
   ROBOT_SECRET,
   ROBOT_SECRETS_JSON,
+  AUDIO_SECRET,
   DEFAULT_ROBOT_ID = 'panynj',
   PORT = 8080,
 } = process.env
@@ -35,7 +36,14 @@ if (ROBOT_SECRETS_JSON) {
   }
 }
 
-const NEW_COMMANDS = new Set(['nav.goal', 'nav.cancel', 'teleop.cmd_vel', 'estop.set'])
+const NEW_COMMANDS = new Set([
+  'nav.goal',
+  'nav.cancel',
+  'teleop.cmd_vel',
+  'estop.set',
+  'audio.ptt_start',
+  'audio.ptt_stop',
+])
 
 const app = express()
 app.use(cors())
@@ -58,6 +66,7 @@ const server = createServer(app)
 const wss = new WebSocketServer({ server })
 
 const robotSockets = new Map() // robotId -> WebSocket
+const audioSockets = new Set() // audio satellites
 const browserSockets = new Set()
 const connectionMeta = new WeakMap()
 
@@ -100,6 +109,10 @@ function onlineRobotIds() {
   return [...robotSockets.entries()]
     .filter(([, ws]) => ws.readyState === WebSocket.OPEN)
     .map(([robotId]) => robotId)
+}
+
+function onlineAudioSockets() {
+  return [...audioSockets].filter((ws) => ws.readyState === WebSocket.OPEN)
 }
 
 function broadcastToBrowsers(message) {
@@ -252,6 +265,14 @@ function normalizeBrowserCommand(raw) {
         payload: { active: parseBoolean(payload.active, false) },
       }
     }
+
+    if (type === 'audio.ptt_start') {
+      return { ...base, type: 'audio.ptt_start', payload: {} }
+    }
+
+    if (type === 'audio.ptt_stop') {
+      return { ...base, type: 'audio.ptt_stop', payload: {} }
+    }
   }
 
   // Legacy browser command compatibility layer.
@@ -361,6 +382,10 @@ wss.on('connection', (ws, req) => {
   const queryRobotId = params.get('robot_id') || params.get('robotId') || null
   const headerRobotSecret = headerString(req, 'x-robot-secret')
   const headerRobotId = headerString(req, 'x-robot-id') || null
+  const queryAudioSecret = params.get('audio_secret') ?? ''
+  const headerAudioSecret = headerString(req, 'x-audio-secret')
+  const audioSecret = queryAudioSecret || headerAudioSecret
+  const audioId = params.get('audio_id') || params.get('audioId') || 'speaker-1'
   const queryToken = params.get('token') ?? ''
   const queryOperatorToken = params.get('operator_token') ?? ''
   const bearerHeader = headerString(req, 'authorization')
@@ -374,6 +399,35 @@ wss.on('connection', (ws, req) => {
   // Legacy robot auth path: ?token=<ROBOT_SECRET>
   if (queryToken && !queryOperatorToken) {
     robotSecretCandidates.push({ secret: queryToken, robotId: queryRobotId })
+  }
+
+  if (audioSecret) {
+    if (!AUDIO_SECRET || audioSecret !== AUDIO_SECRET) {
+      closeAuthError(ws, 'Invalid audio secret')
+      return
+    }
+
+    audioSockets.add(ws)
+    connectionMeta.set(ws, { role: 'audio', audioId })
+
+    console.log(`[relay] Audio satellite connected: ${audioId}`)
+    sendJson(
+      ws,
+      makeRelayMessage('relay.connected', {
+        role: 'audio',
+        audioId,
+      }),
+    )
+
+    ws.on('close', () => {
+      audioSockets.delete(ws)
+      console.log(`[relay] Audio satellite disconnected: ${audioId}`)
+    })
+
+    ws.on('error', (err) => {
+      console.error(`[relay] Audio WS error (${audioId}):`, err.message)
+    })
+    return
   }
 
   for (const candidate of robotSecretCandidates) {
@@ -466,6 +520,23 @@ wss.on('connection', (ws, req) => {
 
     const normalized = normalizeBrowserCommand(msg)
     if (!normalized) return
+
+    if (normalized.type === 'audio.ptt_start' || normalized.type === 'audio.ptt_stop') {
+      const targets = onlineAudioSockets()
+      if (targets.length === 0) {
+        sendJson(
+          ws,
+          makeRelayMessage('relay.error', {
+            code: 'audio_unavailable',
+            message: 'No audio satellite online',
+          }),
+        )
+        return
+      }
+
+      targets.forEach((audioWs) => sendJson(audioWs, normalized))
+      return
+    }
 
     const targetRobotId = resolveTargetRobotId(normalized.robotId)
     if (!targetRobotId) {
