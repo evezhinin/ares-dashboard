@@ -28,27 +28,26 @@ export default function Login({ onLogin }) {
       <div style={{ width: '100%', maxWidth: '360px' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '13px', fontWeight: 500, letterSpacing: '6px', textTransform: 'uppercase', color: '#1a1917', background: '#F5C200', display: 'inline-block', padding: '4px 16px' }}>
-            A.R.E.S
-          </p>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(245,194,0,0.5)', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '8px' }}>
-            TBR-07 · PANYNJ
-          </p>
+          <img
+            src="/ares_white_logo.png"
+            alt="ARES"
+            style={{ width: '100%', maxWidth: '240px', height: 'auto', display: 'inline-block' }}
+          />
         </div>
 
         {/* Card */}
         <div style={{ background: '#fff', border: '1px solid rgba(245,194,0,0.3)', padding: '28px' }}>
-          <h1 style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#1a1917', marginBottom: '4px', fontWeight: 500 }}>
+          <h1 style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: '#1a1917', marginBottom: '4px', fontWeight: 500, textAlign: 'center' }}>
             Mission Control
           </h1>
-          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '24px' }}>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '24px', textAlign: 'center'}}>
             Authorized personnel only
           </p>
 
           <form onSubmit={handleSubmit}>
-            <label style={{ display: 'block', fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
+            {/* <label style={{ display: 'block', fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
               Operator Password
-            </label>
+            </label> */}
             <input
               type="password"
               placeholder="Enter access code"
@@ -58,7 +57,7 @@ export default function Login({ onLogin }) {
               style={{
                 width: '100%', background: '#f4f6fb', border: '1px solid #dde3ee',
                 fontFamily: "'DM Mono', monospace", fontSize: '13px', color: '#1a1917',
-                padding: '9px 12px', outline: 'none', marginBottom: '12px', transition: 'border-color 0.15s',
+                padding: '9px 12px', outline: 'none', marginBottom: '12px', transition: 'border-color 0.15s', textAlign: 'center',
               }}
               onFocus={e => e.target.style.borderColor = '#1B3A6B'}
               onBlur={e => e.target.style.borderColor = '#dde3ee'}
