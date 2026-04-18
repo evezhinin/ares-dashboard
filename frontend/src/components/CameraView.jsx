@@ -1,9 +1,5 @@
 import { useState } from 'react'
 
-function isEmergencyBehavior(behavior) {
-  return behavior === 'ESTOP' || behavior === 'EMERGENCY_STOP'
-}
-
 const CAMERAS = [
   { id: 'front', label: 'Front', src: import.meta.env.VITE_FRONT_PLAYER_URL },
   { id: 'rear',  label: 'Rear',  src: import.meta.env.VITE_REAR_PLAYER_URL  },
@@ -101,7 +97,7 @@ function CamSlot({ label, isMain, isActive, onClick, stoppedVehicle, src }) {
   )
 }
 
-export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCount, uptime }) {
+export default function CameraView({ stoppedVehicle }) {
   const [primaryCam, setPrimaryCam] = useState('front')
 
   return (
@@ -143,24 +139,6 @@ export default function CameraView({ stoppedVehicle, behavior, stoppedVehicleCou
         ))}
       </div>
 
-      {/* Status bar */}
-      <div style={{
-        background: '#ffffff', borderTop: '1px solid #dde3ee',
-        display: 'flex', alignItems: 'center', padding: '0 16px',
-        height: '36px', gap: '20px', flexShrink: 0,
-      }}>
-        {[
-          { label: 'State',    value: behavior || '—',                                   danger: isEmergencyBehavior(behavior) },
-          { label: 'Vehicles', value: stoppedVehicle ? String(stoppedVehicleCount) : '0', danger: stoppedVehicle },
-          { label: 'Uptime',   value: uptime },
-        ].map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#8896ab', letterSpacing: '1px', textTransform: 'uppercase' }}>
-            {s.label}
-            <span style={{ color: s.danger ? '#d63c2a' : '#4a5568' }}>{s.value}</span>
-            {i < 2 && <span style={{ width: '1px', height: '14px', background: '#dde3ee', marginLeft: '14px' }} />}
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
