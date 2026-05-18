@@ -56,6 +56,32 @@ function normalizeAlertEvent(message) {
   }
 }
 
+let audioContext = null
+
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)()
+  }
+  return audioContext
+}
+
+async function playAudioChunk(arrayBuffer) {
+  try {
+    const ctx = getAudioContext()
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+    const decoded = await ctx.decodeAudioData(arrayBuffer.slice(0))
+    const source = ctx.createBufferSource()
+    source.buffer = decoded
+    source.connect(ctx.destination)
+    source.start()
+  } catch {
+    // chunk too small or invalid — ignore
+  }
+}
+
+
 export function useRobotSocket(token, onLogout) {
   const ws = useRef(null)
   const reconnectTimer = useRef(null)
@@ -137,6 +163,7 @@ export function useRobotSocket(token, onLogout) {
       if (disposed || !allowReconnect) return
       const url = `${import.meta.env.VITE_RELAY_WS}?token=${token}`
       const socket = new WebSocket(url)
+      socket.binaryType = 'arraybuffer'
       ws.current = socket
 
       socket.onopen = () => {
@@ -162,6 +189,11 @@ export function useRobotSocket(token, onLogout) {
       }
 
       socket.onmessage = (event) => {
+        // handle binary messages (e.g. audio chunks) in CommsView, so ignore here
+        if (event.data instanceof ArrayBuffer) {
+          playAudioChunk(event.data)
+          return
+        }
         let msg
         try {
           msg = JSON.parse(event.data)
