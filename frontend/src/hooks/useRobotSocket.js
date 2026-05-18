@@ -314,5 +314,6 @@ export function useRobotSocket(token, onLogout) {
     latestAlertEvent,
     hasAlertFeed,
     send,
+    ws,
   }
 }
