@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "checkJs": false
+    "checkJs": false,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": [
     "**/node_modules",
