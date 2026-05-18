@@ -62,10 +62,10 @@ function normalizeAlertEvent(message) {
 //let mediaSource = null
 //let audioElement = null
 let audioCtx = null
+let firstChunk = null
 let chunkBuffer = []
 let chunkBufferSize = 0
-const CHUNK_THRESHOLD = 8000 // accumulate ~8KB before decoding
-
+const DECODE_THRESHOLD = 12000
 
 function getAudioCtx() {
   if (!audioCtx) {
@@ -79,13 +79,21 @@ function getAudioCtx() {
 
 function playAudioChunk(arrayBuffer) {
   try {
+    // Keep the first chunk — it contains the WebM header
+    if (!firstChunk) {
+      firstChunk = arrayBuffer
+      return
+    }
+
     chunkBuffer.push(arrayBuffer)
     chunkBufferSize += arrayBuffer.byteLength
 
-    if (chunkBufferSize >= CHUNK_THRESHOLD) {
-      // Merge accumulated chunks into one buffer
-      const merged = new Uint8Array(chunkBufferSize)
-      let offset = 0
+    if (chunkBufferSize >= DECODE_THRESHOLD) {
+      // Merge: header + accumulated chunks
+      const totalSize = firstChunk.byteLength + chunkBufferSize
+      const merged = new Uint8Array(totalSize)
+      merged.set(new Uint8Array(firstChunk), 0)
+      let offset = firstChunk.byteLength
       for (const buf of chunkBuffer) {
         merged.set(new Uint8Array(buf), offset)
         offset += buf.byteLength
@@ -94,18 +102,26 @@ function playAudioChunk(arrayBuffer) {
       chunkBufferSize = 0
 
       const ctx = getAudioCtx()
-      ctx.decodeAudioData(merged.buffer).then((decoded) => {
+      ctx.decodeAudioData(merged.buffer.slice(0)).then((decoded) => {
         const source = ctx.createBufferSource()
         source.buffer = decoded
         source.connect(ctx.destination)
         source.start()
       }).catch(() => {
-        // incomplete segment — ignore
+        // reset on decode failure
+        firstChunk = null
       })
     }
   } catch (err) {
     console.error('[audio] playAudioChunk error:', err.message)
   }
+}
+
+// Reset audio state when PTT stops
+function resetAudio() {
+  firstChunk = null
+  chunkBuffer = []
+  chunkBufferSize = 0
 }
 
 
@@ -206,6 +222,7 @@ export function useRobotSocket(token, onLogout) {
         setRelayOnline(false)
         setRobotOnline(false)
         resetRobotState()
+        resetAudio()
         scheduleReconnect(connect)
       }
 
@@ -231,7 +248,9 @@ export function useRobotSocket(token, onLogout) {
 
         if (msg.type === 'robot_status') {
           setRobotOnline(msg.online)
-          if (!msg.online) resetRobotState()
+          if (!msg.online) 
+            resetRobotState()
+            resetAudio()
           return
         }
 
