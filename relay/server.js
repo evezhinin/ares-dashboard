@@ -419,6 +419,13 @@ wss.on('connection', (ws, req) => {
       }),
     )
 
+    ws.on('message', (raw, isBinary) => {
+    // Audio satellite can send status messages back
+      if (!isBinary) {
+        const msg = safeJsonParse(raw)
+        if (msg) console.log(`[relay] Audio satellite message:`, msg)
+      }
+    })
     ws.on('close', () => {
       audioSockets.delete(ws)
       console.log(`[relay] Audio satellite disconnected: ${audioId}`)
@@ -506,7 +513,18 @@ wss.on('connection', (ws, req) => {
     source: 'relay',
   })
 
-  ws.on('message', (raw) => {
+  ws.on('message', (raw, isBinary) => {
+    // Forward binary audio chunks directly to audio satellites
+    if (isBinary) {
+      const targets = onlineAudioSockets()
+      targets.forEach((audioWs) => {
+        if (audioWs.readyState === WebSocket.OPEN) {
+          audioWs.send(raw, { binary: true })
+        }
+      })
+      return
+    }
+
     const msg = safeJsonParse(raw)
     if (!msg || typeof msg !== 'object') return
 

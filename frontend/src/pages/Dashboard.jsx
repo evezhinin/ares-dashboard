@@ -52,6 +52,7 @@ export default function Dashboard({ token, onLogout }) {
     latestAlertEvent,
     hasAlertFeed,
     send,
+    ws,
   } = useRobotSocket(token, onLogout)
   const clock = useClock()
 
@@ -251,8 +252,9 @@ export default function Dashboard({ token, onLogout }) {
           )}
           {activeView === 'comms' && (
             <CommsView
-              send={send}
+              send={wrappedSend}
               relayOnline={relayOnline}
+              wsRef={ws}
             />
           )}
         </div>
