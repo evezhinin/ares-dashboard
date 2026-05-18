@@ -55,29 +55,55 @@ function normalizeAlertEvent(message) {
     ts: message.ts ?? new Date().toISOString(),
   }
 }
+//let audioContext = null
+let audioQueue = []
+//let isPlaying = false
+let sourceBuffer = null
+let mediaSource = null
+let audioElement = null
 
-let audioContext = null
+function initAudioPlayer() {
+  if (audioElement) return
 
-function getAudioContext() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)()
-  }
-  return audioContext
+  audioElement = new Audio()
+  audioElement.autoplay = true
+
+  mediaSource = new MediaSource()
+  audioElement.src = URL.createObjectURL(mediaSource)
+
+  mediaSource.addEventListener('sourceopen', () => {
+    try {
+      sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus')
+      sourceBuffer.mode = 'sequence'
+
+      sourceBuffer.addEventListener('updateend', () => {
+        if (audioQueue.length > 0 && !sourceBuffer.updating) {
+          const next = audioQueue.shift()
+          sourceBuffer.appendBuffer(next)
+        }
+      })
+    } catch (err) {
+      console.error('[audio] MediaSource error:', err.message)
+    }
+  })
+
+  audioElement.play().catch(() => {})
 }
 
-async function playAudioChunk(arrayBuffer) {
+function playAudioChunk(arrayBuffer) {
   try {
-    const ctx = getAudioContext()
-    if (ctx.state === 'suspended') {
-      await ctx.resume()
+    if (!audioElement) initAudioPlayer()
+    if (!sourceBuffer) {
+      audioQueue.push(arrayBuffer)
+      return
     }
-    const decoded = await ctx.decodeAudioData(arrayBuffer.slice(0))
-    const source = ctx.createBufferSource()
-    source.buffer = decoded
-    source.connect(ctx.destination)
-    source.start()
-  } catch {
-    // chunk too small or invalid — ignore
+    if (sourceBuffer.updating) {
+      audioQueue.push(arrayBuffer)
+    } else {
+      sourceBuffer.appendBuffer(arrayBuffer)
+    }
+  } catch (err) {
+    console.error('[audio] playAudioChunk error:', err.message)
   }
 }
 
