@@ -419,13 +419,27 @@ wss.on('connection', (ws, req) => {
       }),
     )
 
+    // ws.on('message', (raw, isBinary) => {
+    // // Audio satellite can send status messages back
+    //   if (!isBinary) {
+    //     const msg = safeJsonParse(raw)
+    //     if (msg) console.log(`[relay] Audio satellite message:`, msg)
+    //   }
+    // })
     ws.on('message', (raw, isBinary) => {
-    // Audio satellite can send status messages back
-      if (!isBinary) {
-        const msg = safeJsonParse(raw)
-        if (msg) console.log(`[relay] Audio satellite message:`, msg)
+      if (isBinary) {
+        // Forward mic audio chunks from satellite to all browsers
+        browserSockets.forEach((browserWs) => {
+          if (browserWs.readyState === WebSocket.OPEN) {
+            browserWs.send(raw, { binary: true })
+          }
+        })
+        return
       }
-    })
+      const msg = safeJsonParse(raw)
+      if (msg) console.log(`[relay] Audio satellite message:`, msg)
+      })
+    
     ws.on('close', () => {
       audioSockets.delete(ws)
       console.log(`[relay] Audio satellite disconnected: ${audioId}`)
