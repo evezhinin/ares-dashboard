@@ -191,6 +191,7 @@ export function useRobotSocket(token, onLogout) {
       socket.onmessage = (event) => {
         // handle binary messages (e.g. audio chunks) in CommsView, so ignore here
         if (event.data instanceof ArrayBuffer) {
+          console.log('[audio] Received binary chunk:', event.data.byteLength, 'bytes')
           playAudioChunk(event.data)
           return
         }
