@@ -56,51 +56,52 @@ function normalizeAlertEvent(message) {
   }
 }
 //let audioContext = null
-let audioQueue = []
+//let audioQueue = []
 //let isPlaying = false
-let sourceBuffer = null
-let mediaSource = null
-let audioElement = null
+//let sourceBuffer = null
+//let mediaSource = null
+//let audioElement = null
+let audioCtx = null
+let chunkBuffer = []
+let chunkBufferSize = 0
+const CHUNK_THRESHOLD = 8000 // accumulate ~8KB before decoding
 
-function initAudioPlayer() {
-  if (audioElement) return
 
-  audioElement = new Audio()
-  audioElement.autoplay = true
-
-  mediaSource = new MediaSource()
-  audioElement.src = URL.createObjectURL(mediaSource)
-
-  mediaSource.addEventListener('sourceopen', () => {
-    try {
-      sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs=opus')
-      sourceBuffer.mode = 'sequence'
-
-      sourceBuffer.addEventListener('updateend', () => {
-        if (audioQueue.length > 0 && !sourceBuffer.updating) {
-          const next = audioQueue.shift()
-          sourceBuffer.appendBuffer(next)
-        }
-      })
-    } catch (err) {
-      console.error('[audio] MediaSource error:', err.message)
-    }
-  })
-
-  audioElement.play().catch(() => {})
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 })
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {})
+  }
+  return audioCtx
 }
 
 function playAudioChunk(arrayBuffer) {
   try {
-    if (!audioElement) initAudioPlayer()
-    if (!sourceBuffer) {
-      audioQueue.push(arrayBuffer)
-      return
-    }
-    if (sourceBuffer.updating) {
-      audioQueue.push(arrayBuffer)
-    } else {
-      sourceBuffer.appendBuffer(arrayBuffer)
+    chunkBuffer.push(arrayBuffer)
+    chunkBufferSize += arrayBuffer.byteLength
+
+    if (chunkBufferSize >= CHUNK_THRESHOLD) {
+      // Merge accumulated chunks into one buffer
+      const merged = new Uint8Array(chunkBufferSize)
+      let offset = 0
+      for (const buf of chunkBuffer) {
+        merged.set(new Uint8Array(buf), offset)
+        offset += buf.byteLength
+      }
+      chunkBuffer = []
+      chunkBufferSize = 0
+
+      const ctx = getAudioCtx()
+      ctx.decodeAudioData(merged.buffer).then((decoded) => {
+        const source = ctx.createBufferSource()
+        source.buffer = decoded
+        source.connect(ctx.destination)
+        source.start()
+      }).catch(() => {
+        // incomplete segment — ignore
+      })
     }
   } catch (err) {
     console.error('[audio] playAudioChunk error:', err.message)
