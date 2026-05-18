@@ -5,8 +5,6 @@ const {
   RELAY_WS_URL,
   AUDIO_SECRET,
   AUDIO_ID = 'pi-speaker',
-  PTT_START_CMD = '',
-  PTT_STOP_CMD = '',
   RECONNECT_DELAY_MS = '3000',
 } = process.env
 
@@ -26,6 +24,7 @@ let ws = null
 let reconnectTimer = null
 let talking = false
 let shuttingDown = false
+let ffplayProcess = null
 
 function safeParse(raw) {
   try {
@@ -42,63 +41,77 @@ function wsUrlWithAuth(baseUrl) {
   return `${baseUrl}${sep}audio_secret=${encodeURIComponent(AUDIO_SECRET)}&audio_id=${encodeURIComponent(AUDIO_ID)}`
 }
 
-function runCommand(label, command) {
-  if (!command) {
-    console.log(`[audio] ${label}: no command configured`)
-    return Promise.resolve()
-  }
+function startFfplay() {
+  if (ffplayProcess) return
 
-  return new Promise((resolve) => {
-    const child = spawn('sh', ['-lc', command], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-
-    let stderr = ''
-    child.stdout.on('data', (chunk) => {
-      process.stdout.write(chunk)
-    })
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString()
-      process.stderr.write(chunk)
-    })
-
-    child.on('close', (code) => {
-      if (code !== 0) {
-        console.error(`[audio] ${label} command failed (exit ${code})`)
-        if (stderr.trim()) console.error(stderr.trim())
-      }
-      resolve()
-    })
+  console.log('[audio] Starting ffplay for audio playback')
+  ffplayProcess = spawn('ffplay', [
+    '-nodisp',
+    '-autoexit',
+    '-i', 'pipe:0',
+    '-af', 'volume=2.0',
+    '-fflags', 'nobuffer',
+    '-flags', 'low_delay',
+    '-framedrop',
+  ], {
+    stdio: ['pipe', 'ignore', 'ignore'],
   })
+
+  ffplayProcess.on('close', (code) => {
+    console.log(`[audio] ffplay exited with code ${code}`)
+    ffplayProcess = null
+  })
+
+  ffplayProcess.on('error', (err) => {
+    console.error('[audio] ffplay error:', err.message)
+    ffplayProcess = null
+  })
+}
+
+function stopFfplay() {
+  if (!ffplayProcess) return
+  try {
+    ffplayProcess.stdin.end()
+  } catch {}
+  ffplayProcess = null
 }
 
 async function handlePttStart() {
   if (talking) return
   talking = true
-  console.log('[audio] PTT start')
-  await runCommand('ptt_start', PTT_START_CMD)
+  console.log('[audio] PTT start — opening audio stream')
+  startFfplay()
 }
 
 async function handlePttStop() {
   if (!talking) return
   talking = false
-  console.log('[audio] PTT stop')
-  await runCommand('ptt_stop', PTT_STOP_CMD)
+  console.log('[audio] PTT stop — closing audio stream')
+  stopFfplay()
+}
+
+function handleAudioChunk(raw) {
+  if (!talking || !ffplayProcess) return
+  try {
+    if (ffplayProcess.stdin.writable) {
+      ffplayProcess.stdin.write(raw)
+    }
+  } catch (err) {
+    console.error('[audio] Error writing chunk:', err.message)
+  }
 }
 
 function scheduleReconnect() {
   if (shuttingDown) return
   clearTimeout(reconnectTimer)
-  reconnectTimer = setTimeout(() => {
-    connect()
-  }, reconnectDelayMs)
+  reconnectTimer = setTimeout(() => connect(), reconnectDelayMs)
 }
 
 function connect() {
   if (shuttingDown) return
 
   const url = wsUrlWithAuth(RELAY_WS_URL)
-  console.log(`[audio] Connecting to ${url.replace(AUDIO_SECRET, '***')}`)
+  console.log('[audio] Connecting to relay')
 
   const socket = new WebSocket(url)
   ws = socket
@@ -107,7 +120,12 @@ function connect() {
     console.log('[audio] Connected to relay')
   })
 
-  socket.on('message', (raw) => {
+  socket.on('message', (raw, isBinary) => {
+    if (isBinary) {
+      handleAudioChunk(raw)
+      return
+    }
+
     const msg = safeParse(raw)
     if (!msg || typeof msg.type !== 'string') return
 
@@ -137,21 +155,14 @@ async function shutdown(signal) {
   if (shuttingDown) return
   shuttingDown = true
   clearTimeout(reconnectTimer)
-
   console.log(`[audio] ${signal} received, shutting down`)
   await handlePttStop()
-
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
     ws.close()
   }
 }
 
-process.on('SIGINT', () => {
-  void shutdown('SIGINT')
-})
-
-process.on('SIGTERM', () => {
-  void shutdown('SIGTERM')
-})
+process.on('SIGINT',  () => void shutdown('SIGINT'))
+process.on('SIGTERM', () => void shutdown('SIGTERM'))
 
 connect()
