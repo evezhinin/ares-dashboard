@@ -248,9 +248,10 @@ export function useRobotSocket(token, onLogout) {
 
         if (msg.type === 'robot_status') {
           setRobotOnline(msg.online)
-          if (!msg.online) 
+          if (!msg.online) {
             resetRobotState()
             resetAudio()
+          }
           return
         }
 

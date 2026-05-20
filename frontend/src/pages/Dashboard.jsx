@@ -58,8 +58,11 @@ export default function Dashboard({ token, onLogout }) {
 
   const [activeView,    setActiveView]    = useState('camera')
   const [teleopEnabled, setTeleopEnabled] = useState(false)
-  const [estopActive,   setEstopActive]   = useState(false)
   const [lastCmd,       setLastCmd]       = useState(null)
+
+  // Derived from robot telemetry — true whenever the robot is actually in estop.
+  // No timer: controls stay locked until the robot explicitly reports it is safe.
+  const estopActive = telemetry.safetyStop || isEmergencyBehavior(telemetry.behavior)
   const [notifications, setNotifications] = useState([])
   const notifId = useRef(0)
 
@@ -135,8 +138,6 @@ export default function Dashboard({ token, onLogout }) {
     send({ type: 'estop' })
     wrappedSend({ type: 'cmd_vel', linear: 0, angular: 0 })
     setTeleopEnabled(false)
-    setEstopActive(true)
-    setTimeout(() => setEstopActive(false), 3000)
   }
 
   const isLive = relayOnline && robotOnline

@@ -9,6 +9,35 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))
 }
 
+// Send cmd_vel at 10 Hz for the given duration, then send an explicit zero-stop.
+// Rejects immediately (with AbortError) if signal is aborted during the run.
+function runVelStep(send, linear, angular, durationMs, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      send({ type: 'cmd_vel', linear: 0, angular: 0 })
+      return reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    const interval = setInterval(() => {
+      if (signal.aborted) return
+      send({ type: 'cmd_vel', linear, angular })
+    }, 100)
+
+    const timer = setTimeout(() => {
+      clearInterval(interval)
+      send({ type: 'cmd_vel', linear: 0, angular: 0 })
+      resolve()
+    }, durationMs)
+
+    signal.addEventListener('abort', () => {
+      clearTimeout(timer)
+      clearInterval(interval)
+      send({ type: 'cmd_vel', linear: 0, angular: 0 })
+      reject(new DOMException('Aborted', 'AbortError'))
+    }, { once: true })
+  })
+}
+
 function defineBlocks(Blockly) {
   /* ── Movement ─────────────────────────── */
 
@@ -307,11 +336,10 @@ export default function BlocklyPanel({ send, disabled, onEStop }) {
         const step = steps[i]
 
         if (step.cmd === 'vel') {
-          send({ type: 'cmd_vel', linear: step.linear, angular: step.angular })
           if (step.duration > 0) {
-            await sleep(step.duration * 1000)
-            if (ctrl.signal.aborted) throw new DOMException('Aborted', 'AbortError')
-            send({ type: 'cmd_vel', linear: 0, angular: 0 })
+            await runVelStep(send, step.linear, step.angular, step.duration * 1000, ctrl.signal)
+          } else {
+            send({ type: 'cmd_vel', linear: step.linear, angular: step.angular })
           }
         } else if (step.cmd === 'nav_goal') {
           send({ type: 'nav_goal', x: step.x, y: step.y, theta: step.theta })

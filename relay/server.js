@@ -11,6 +11,7 @@ const {
   ROBOT_SECRET,
   ROBOT_SECRETS_JSON,
   AUDIO_SECRET,
+  ALLOWED_ORIGINS,
   DEFAULT_ROBOT_ID = 'panynj',
   PORT = 8080,
 } = process.env
@@ -45,13 +46,52 @@ const NEW_COMMANDS = new Set([
   'audio.ptt_stop',
 ])
 
+// Parse allowed origins once at startup. When ALLOWED_ORIGINS is set, only
+// those origins are accepted. When unset, all origins are allowed (dev mode).
+const allowedOriginSet = ALLOWED_ORIGINS
+  ? new Set(ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean))
+  : null
+
+if (!allowedOriginSet) {
+  console.warn('[relay] ALLOWED_ORIGINS not set — all origins permitted (not safe for production)')
+}
+
+// Simple in-process login rate limiter: max 10 attempts per IP per 15 min.
+const loginAttempts = new Map()
+function checkLoginRate(ip) {
+  const now = Date.now()
+  const WINDOW = 15 * 60 * 1000
+  const MAX = 10
+  let entry = loginAttempts.get(ip)
+  if (!entry || now - entry.windowStart > WINDOW) {
+    entry = { windowStart: now, count: 0 }
+    loginAttempts.set(ip, entry)
+  }
+  entry.count++
+  return entry.count <= MAX
+}
+
 const app = express()
-app.use(cors())
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!allowedOriginSet || !origin || allowedOriginSet.has(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('CORS: origin not allowed'))
+    }
+  },
+  credentials: true,
+}))
 app.use(express.json())
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
 app.post('/login', async (req, res) => {
+  const ip = req.socket.remoteAddress ?? 'unknown'
+  if (!checkLoginRate(ip)) {
+    return res.status(429).json({ message: 'Too many login attempts, try again later' })
+  }
+
   const { password } = req.body ?? {}
   if (!password) return res.status(400).json({ message: 'Password required' })
 
@@ -378,7 +418,8 @@ wss.on('connection', (ws, req) => {
   const params = new URL(req.url, 'ws://localhost').searchParams
 
   const queryRobotSecret = params.get('robot_secret') ?? ''
-  console.log(`[relay] Connection url: ${req.url.substring(0,120)} robot_secret_present: ${!!queryRobotSecret} robot_id: ${params.get('robot_id')}`)
+  console.log(`[relay] New connection — robot_secret_present:${!!queryRobotSecret} audio_secret_present:${!!(params.get('audio_secret') ?? '')} operator_token_present:${!!(params.get('token') || params.get('operator_token') || headerString(req, 'authorization'))} robot_id:${params.get('robot_id') ?? ''}`)
+
   const queryRobotId = params.get('robot_id') || params.get('robotId') || null
   const headerRobotSecret = headerString(req, 'x-robot-secret')
   const headerRobotId = headerString(req, 'x-robot-id') || null
