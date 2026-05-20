@@ -19,9 +19,23 @@ export default function NavGoalForm({ send, disabled }) {
   const [y, setY] = useState('')
   const [theta, setTheta] = useState('')
 
+  const [error, setError] = useState(null)
+
   function handleSubmit(e) {
     e.preventDefault()
-    send({ type: 'nav_goal', x: parseFloat(x), y: parseFloat(y), theta: parseFloat(theta) * DEG_TO_RAD })
+    const nx = parseFloat(x)
+    const ny = parseFloat(y)
+    const ntheta = parseFloat(theta)
+    if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(ntheta)) {
+      setError('All fields must be finite numbers')
+      return
+    }
+    if (Math.abs(nx) > 10000 || Math.abs(ny) > 10000) {
+      setError('X/Y out of range (±10 000 m)')
+      return
+    }
+    setError(null)
+    send({ type: 'nav_goal', x: nx, y: ny, theta: ntheta * DEG_TO_RAD })
   }
 
   return (
@@ -65,6 +79,11 @@ export default function NavGoalForm({ send, disabled }) {
         >
           Send Nav Goal →
         </button>
+        {error && (
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#d63c2a', letterSpacing: '1px', marginTop: '6px' }}>
+            {error}
+          </p>
+        )}
       </form>
     </div>
   )

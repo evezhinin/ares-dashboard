@@ -30,6 +30,12 @@ export function useTeleop(send, enabled) {
     send({ type: 'cmd_vel', linear: 0, angular: 0 })
   }, [send])
 
+  // Stop when disabled
+  useEffect(() => {
+    if (!enabled) stopCommand()
+  }, [enabled, stopCommand])
+
+  // Keyboard listeners (only when enabled)
   useEffect(() => {
     if (!enabled) return
 
@@ -48,6 +54,24 @@ export function useTeleop(send, enabled) {
       window.removeEventListener('keyup', onUp)
     }
   }, [enabled, startCommand, stopCommand])
+
+  // Stop on focus loss, visibility change, pointer cancel, and unmount
+  useEffect(() => {
+    function onBlur() { stopCommand() }
+    function onVisChange() { if (document.hidden) stopCommand() }
+    function onPointerCancel() { stopCommand() }
+
+    window.addEventListener('blur', onBlur)
+    document.addEventListener('visibilitychange', onVisChange)
+    window.addEventListener('pointercancel', onPointerCancel)
+
+    return () => {
+      stopCommand()
+      window.removeEventListener('blur', onBlur)
+      document.removeEventListener('visibilitychange', onVisChange)
+      window.removeEventListener('pointercancel', onPointerCancel)
+    }
+  }, [stopCommand])
 
   return { startCommand, stopCommand }
 }
