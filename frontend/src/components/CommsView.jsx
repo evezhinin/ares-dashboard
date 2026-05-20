@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export default function CommsView({ send, relayOnline, wsRef }) {
   const [talking, setTalking]       = useState(false)
@@ -22,7 +22,7 @@ export default function CommsView({ send, relayOnline, wsRef }) {
       .catch(() => setError('Microphone access denied'))
   }, [])
 
-  function stopTalking() {
+  const stopTalking = useCallback(() => {
     if (!talkingRef.current) return
     mediaRecorderRef.current?.stop()
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -30,14 +30,14 @@ export default function CommsView({ send, relayOnline, wsRef }) {
     streamRef.current = null
     send({ type: 'audio.ptt_stop' })
     setTalking(false)
-  }
+  }, [send])
 
   // Cleanup on unmount — stopTalking is declared above so no hoisting issue
   useEffect(() => {
     return () => {
       if (talkingRef.current) stopTalking()
     }
-  }, [])
+  }, [stopTalking])
 
   async function startTalking() {
     if (!relayOnline || talkingRef.current || !audioReady) return

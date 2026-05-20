@@ -1,37 +1,20 @@
 import StatusCard from './StatusCard'
 
-const RAD_TO_DEG = 180 / Math.PI
-
-function batteryColor(v) {
-  if (v == null) return '#8896ab'
-  if (v > 50) return '#2a7d4f'
-  if (v > 20) return '#c47d0e'
-  return '#d63c2a'
-}
-
-function tempColor(v) {
-  if (v == null) return '#8896ab'
-  if (v > 75) return '#d63c2a'
-  if (v > 60) return '#c47d0e'
-  return '#2a7d4f'
-}
-
-
 // Props: telemetry – the telemetry object from useRobotSocket
 //   { battery, speed, odom: { x, y, heading }, cpuTemp }
 export default function SensorView({ telemetry }) {
   const {
-    battery,
-    speed,
-    odom,
-    cpuTemp,
-    temperature,
-    humidity,
-    carbonDioxide,
-    carbonMonoxide,
-    ammonia,
-    nitricOxide,
-    acoustic,
+    // battery,
+    // speed,
+    // odom,
+    // cpuTemp,
+    // temperature,
+    // humidity,
+    // carbonDioxide,
+    // carbonMonoxide,
+    // ammonia,
+    // nitricOxide,
+    // acoustic,
     internalTemperature,
     internalHumidity,
     internalCarbonDioxide,
@@ -49,10 +32,8 @@ export default function SensorView({ telemetry }) {
     nh3Front,         nh3Back,
     no2Front,         no2Back,
     soundDbFront,     soundDbBack,
-    honkingFront,     honkingBack,
+    // honkingFront,     honkingBack,
   } = telemetry
-
-  const headingDeg = odom.heading != null ? (odom.heading * RAD_TO_DEG).toFixed(1) : null
 
   function formatSensor(value, unit = '') {
     if (value == null) return '—'
