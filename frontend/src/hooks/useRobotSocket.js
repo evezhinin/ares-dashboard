@@ -151,6 +151,22 @@ export function useRobotSocket(token, onLogout) {
     stoppedVehicleCount: 0,
     stoppedVehicleDetails: { active: false, vehicles: [] },
     cpuTemp: null,
+    temperatureFront: null,
+    temperatureBack:  null,
+    humidityFront:    null,
+    humidityBack:     null,
+    co2Front:         null,
+    co2Back:          null,
+    coFront:          null,
+    coBack:           null,
+    nh3Front:         null,
+    nh3Back:          null,
+    no2Front:         null,
+    no2Back:          null,
+    soundDbFront:     null,
+    soundDbBack:      null,
+    honkingFront:     null,
+    honkingBack:      null,
   })
 
   const send = useCallback(
@@ -297,6 +313,33 @@ export function useRobotSocket(token, onLogout) {
           const d = msg.payload ?? {}
           if (typeof d.connected === 'boolean') {
             setRobotOnline(d.connected)
+          }
+        
+        if (msg.type === 'sensor_readings') {
+          const d = msg.payload ?? {}
+          setTelemetry((prev) => ({
+            ...prev,
+            // SCD41
+            temperatureFront: d.front?.temperature ?? prev.temperatureFront,
+            temperatureBack:  d.back?.temperature  ?? prev.temperatureBack,
+            humidityFront:    d.front?.humidity    ?? prev.humidityFront,
+            humidityBack:     d.back?.humidity     ?? prev.humidityBack,
+            co2Front:         d.front?.co2         ?? prev.co2Front,
+            co2Back:          d.back?.co2          ?? prev.co2Back,
+            // Gas
+            coFront:          d.front?.co          ?? prev.coFront,
+            coBack:           d.back?.co           ?? prev.coBack,
+            nh3Front:         d.front?.nh3         ?? prev.nh3Front,
+            nh3Back:          d.back?.nh3          ?? prev.nh3Back,
+            no2Front:         d.front?.no2         ?? prev.no2Front,
+            no2Back:          d.back?.no2          ?? prev.no2Back,
+            // Sound
+            soundDbFront:     d.front?.sound_db    ?? prev.soundDbFront,
+            soundDbBack:      d.back?.sound_db     ?? prev.soundDbBack,
+            honkingFront:     d.front?.honking     ?? prev.honkingFront,
+            honkingBack:      d.back?.honking      ?? prev.honkingBack,
+            }))
+            return
           }
 
           setTelemetry((prev) => {
