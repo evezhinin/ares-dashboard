@@ -102,7 +102,11 @@ function resetAudio() {
   msReady = false
   sourceBuffer = null
   if (mediaSource && mediaSource.readyState === 'open') {
-    try { mediaSource.endOfStream() } catch {}
+    try {
+      mediaSource.endOfStream()
+    } catch (err) {
+      console.debug('[audio] endOfStream failed during reset:', err)
+    }
   }
   mediaSource = null
   if (audioEl) {
@@ -269,7 +273,7 @@ export function useRobotSocket(token, onLogout) {
         }
 
         if (msg.type === 'telemetry') {
-          const d = msg.data
+          const d = msg.data ?? {}
           setTelemetry((prev) => ({
             ...prev,
             behavior: d.behavior ?? prev.behavior,
