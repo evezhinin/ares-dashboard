@@ -284,6 +284,7 @@ export function useRobotSocket(token, onLogout) {
         if (msg.type === 'telemetry') {
           const d = msg.data
           setTelemetry((prev) => ({
+            ...prev,
             behavior: d.behavior ?? prev.behavior,
             battery: d.battery ?? prev.battery,
             speed: d.speed ?? prev.speed,
@@ -328,6 +329,7 @@ export function useRobotSocket(token, onLogout) {
           setTelemetry((prev) => {
             const nextStoppedVehicleActive =
               d.stoppedVehicle?.active ?? prev.stoppedVehicle
+
             const nextStoppedVehicleVehicles = Array.isArray(
               d.stoppedVehicle?.vehicles,
             )
@@ -335,6 +337,7 @@ export function useRobotSocket(token, onLogout) {
               : prev.stoppedVehicleDetails.vehicles
 
             return {
+              ...prev,
               behavior: d.behavior ?? prev.behavior,
               battery: prev.battery,
               speed: prev.speed,
