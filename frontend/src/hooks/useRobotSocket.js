@@ -368,24 +368,30 @@ export function useRobotSocket(token, onLogout) {
         if (msg.type === 'sensor_readings') {
           console.log('[sensor_readings] payload:', JSON.stringify(msg.payload, null, 2))
           const d = msg.payload ?? {}
-          const front = d.front ?? {}
-          const back = d.back ?? {}
+          const scd41Front = d.scd41?.front ?? {}
+          const scd41Back  = d.scd41?.back  ?? {}
+          const gasFront   = d.gas?.front   ?? {}
+          const gasBack    = d.gas?.back    ?? {}
+          const soundFront = d.sound?.front ?? {}
+          const soundBack  = d.sound?.back  ?? {}
           setTelemetry((prev) => ({
             ...prev,
-            temperatureFront: front.temperature ?? prev.temperatureFront,
-            temperatureBack:  back.temperature  ?? prev.temperatureBack,
-            humidityFront:    front.humidity    ?? prev.humidityFront,
-            humidityBack:     back.humidity     ?? prev.humidityBack,
-            co2Front:         front.co2         ?? prev.co2Front,
-            co2Back:          back.co2          ?? prev.co2Back,
-            coFront:          front.co          ?? prev.coFront,
-            coBack:           back.co           ?? prev.coBack,
-            nh3Front:         front.nh3         ?? prev.nh3Front,
-            nh3Back:          back.nh3          ?? prev.nh3Back,
-            no2Front:         front.no2         ?? prev.no2Front,
-            no2Back:          back.no2          ?? prev.no2Back,
-            soundDbFront:     front.sound_db    ?? prev.soundDbFront,
-            soundDbBack:      back.sound_db     ?? prev.soundDbBack,
+            temperatureFront: scd41Front.temperature      ?? prev.temperatureFront,
+            temperatureBack:  scd41Back.temperature       ?? prev.temperatureBack,
+            humidityFront:    scd41Front.humidity         ?? prev.humidityFront,
+            humidityBack:     scd41Back.humidity          ?? prev.humidityBack,
+            co2Front:         scd41Front.co2              ?? prev.co2Front,
+            co2Back:          scd41Back.co2               ?? prev.co2Back,
+            coFront:          gasFront.co                 ?? prev.coFront,
+            coBack:           gasBack.co                  ?? prev.coBack,
+            nh3Front:         gasFront.nh3                ?? prev.nh3Front,
+            nh3Back:          gasBack.nh3                 ?? prev.nh3Back,
+            no2Front:         gasFront.no2                ?? prev.no2Front,
+            no2Back:          gasBack.no2                 ?? prev.no2Back,
+            soundDbFront:     soundFront.db_level         ?? prev.soundDbFront,
+            soundDbBack:      soundBack.db_level          ?? prev.soundDbBack,
+            honkingFront:     soundFront.honking_detected ?? prev.honkingFront,
+            honkingBack:      soundBack.honking_detected  ?? prev.honkingBack,
           }))
           return
         }
