@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React from 'react';
+  
+  const UseRobotSocket = () =>  {
+	return (
+	  <div>
+	  </div>
+	);
+  }
+  
+  export default UseRobotSocket;
+  import { useCallback, useEffect, useRef, useState } from 'react'
 
 const RECONNECT_DELAY = 3000
 
@@ -67,6 +77,7 @@ function getOrCreateAudio() {
   audioEl.autoplay = true
   mediaSource = new MediaSource()
   audioEl.src = URL.createObjectURL(mediaSource)
+  audioEl.play().catch(() => {})
   mediaSource.addEventListener('sourceopen', () => {
     try {
       sourceBuffer = mediaSource.addSourceBuffer('audio/webm;codecs=opus')
