@@ -55,73 +55,60 @@ function normalizeAlertEvent(message) {
     ts: message.ts ?? new Date().toISOString(),
   }
 }
-//let audioContext = null
-//let audioQueue = []
-//let isPlaying = false
-//let sourceBuffer = null
-//let mediaSource = null
-//let audioElement = null
-let audioCtx = null
-let firstChunk = null
-let chunkBuffer = []
-let chunkBufferSize = 0
-const DECODE_THRESHOLD = 12000
+let audioEl = null
+let mediaSource = null
+let sourceBuffer = null
+let pendingChunks = []
+let msReady = false
 
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 })
+function getOrCreateAudio() {
+  if (audioEl) return
+  audioEl = new Audio()
+  audioEl.autoplay = true
+  mediaSource = new MediaSource()
+  audioEl.src = URL.createObjectURL(mediaSource)
+  mediaSource.addEventListener('sourceopen', () => {
+    try {
+      sourceBuffer = mediaSource.addSourceBuffer('audio/webm;codecs=opus')
+      sourceBuffer.mode = 'sequence'
+      msReady = true
+      flushPending()
+      sourceBuffer.addEventListener('updateend', flushPending)
+    } catch (err) {
+      console.error('[audio] MediaSource setup failed:', err)
+    }
+  })
+}
+
+function flushPending() {
+  if (!sourceBuffer || sourceBuffer.updating || pendingChunks.length === 0) return
+  const chunk = pendingChunks.shift()
+  try {
+    sourceBuffer.appendBuffer(chunk)
+  } catch (err) {
+    console.error('[audio] appendBuffer error:', err)
+    pendingChunks = []
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {})
-  }
-  return audioCtx
 }
 
 function playAudioChunk(arrayBuffer) {
-  try {
-    // Keep the first chunk — it contains the WebM header
-    if (!firstChunk) {
-      firstChunk = arrayBuffer
-      return
-    }
-
-    chunkBuffer.push(arrayBuffer)
-    chunkBufferSize += arrayBuffer.byteLength
-
-    if (chunkBufferSize >= DECODE_THRESHOLD) {
-      // Merge: header + accumulated chunks
-      const totalSize = firstChunk.byteLength + chunkBufferSize
-      const merged = new Uint8Array(totalSize)
-      merged.set(new Uint8Array(firstChunk), 0)
-      let offset = firstChunk.byteLength
-      for (const buf of chunkBuffer) {
-        merged.set(new Uint8Array(buf), offset)
-        offset += buf.byteLength
-      }
-      chunkBuffer = []
-      chunkBufferSize = 0
-
-      const ctx = getAudioCtx()
-      ctx.decodeAudioData(merged.buffer.slice(0)).then((decoded) => {
-        const source = ctx.createBufferSource()
-        source.buffer = decoded
-        source.connect(ctx.destination)
-        source.start()
-      }).catch(() => {
-        // reset on decode failure
-        firstChunk = null
-      })
-    }
-  } catch (err) {
-    console.error('[audio] playAudioChunk error:', err.message)
-  }
+  getOrCreateAudio()
+  pendingChunks.push(arrayBuffer)
+  if (msReady) flushPending()
 }
 
-// Reset audio state when PTT stops
 function resetAudio() {
-  firstChunk = null
-  chunkBuffer = []
-  chunkBufferSize = 0
+  pendingChunks = []
+  msReady = false
+  sourceBuffer = null
+  if (mediaSource && mediaSource.readyState === 'open') {
+    try { mediaSource.endOfStream() } catch {}
+  }
+  mediaSource = null
+  if (audioEl) {
+    audioEl.src = ''
+    audioEl = null
+  }
 }
 
 
