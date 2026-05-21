@@ -1,14 +1,4 @@
-import React from 'react';
-  
-  const UseRobotSocket = () =>  {
-	return (
-	  <div>
-	  </div>
-	);
-  }
-  
-  export default UseRobotSocket;
-  import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const RECONNECT_DELAY = 3000
 
