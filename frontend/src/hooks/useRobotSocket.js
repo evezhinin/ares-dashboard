@@ -153,6 +153,16 @@ export function useRobotSocket(token, onLogout) {
     hub1Exhaust: null,
     hub2Intake: null,
     hub2Exhaust: null,
+    bay1Temperature: null, bay1Humidity: null, bay1Co2: null,
+    bay2Temperature: null, bay2Humidity: null, bay2Co2: null,
+    bay3Temperature: null, bay3Humidity: null, bay3Co2: null,
+    bay4Temperature: null, bay4Humidity: null, bay4Co2: null,
+    exhaustFan1Rpm: null, exhaustFan2Rpm: null, exhaustFan3Rpm: null, exhaustFan4Rpm: null,
+    intakeFan1Rpm: null, intakeFan2Rpm: null, intakeFan3Rpm: null, intakeFan4Rpm: null,
+    intakeFan5Rpm: null, intakeFan6Rpm: null, intakeFan7Rpm: null, intakeFan8Rpm: null,
+    intakeFan9Rpm: null, intakeFan10Rpm: null,
+    fansExhaustSpeed: null,
+    fansIntakeSpeed: null,
     temperatureFront: null,
     temperatureBack:  null,
     humidityFront:    null,
@@ -392,6 +402,43 @@ export function useRobotSocket(token, onLogout) {
             soundDbBack:      soundBack.db_level          ?? prev.soundDbBack,
             honkingFront:     soundFront.honking_detected ?? prev.honkingFront,
             honkingBack:      soundBack.honking_detected  ?? prev.honkingBack,
+          }))
+          return
+        }
+
+        if (msg.type === 'internal_sensor_readings') {
+          console.log('[internal_sensor_readings] payload:', JSON.stringify(msg.payload, null, 2))
+          const d = msg.payload ?? {}
+          setTelemetry((prev) => ({
+            ...prev,
+            bay1Temperature:   d.bay_1?.temperature    ?? prev.bay1Temperature,
+            bay1Humidity:      d.bay_1?.humidity        ?? prev.bay1Humidity,
+            bay1Co2:           d.bay_1?.co2             ?? prev.bay1Co2,
+            bay2Temperature:   d.bay_2?.temperature    ?? prev.bay2Temperature,
+            bay2Humidity:      d.bay_2?.humidity        ?? prev.bay2Humidity,
+            bay2Co2:           d.bay_2?.co2             ?? prev.bay2Co2,
+            bay3Temperature:   d.bay_3?.temperature    ?? prev.bay3Temperature,
+            bay3Humidity:      d.bay_3?.humidity        ?? prev.bay3Humidity,
+            bay3Co2:           d.bay_3?.co2             ?? prev.bay3Co2,
+            bay4Temperature:   d.bay_4?.temperature    ?? prev.bay4Temperature,
+            bay4Humidity:      d.bay_4?.humidity        ?? prev.bay4Humidity,
+            bay4Co2:           d.bay_4?.co2             ?? prev.bay4Co2,
+            exhaustFan1Rpm:    d.exhaust_fan_1?.rpm    ?? prev.exhaustFan1Rpm,
+            exhaustFan2Rpm:    d.exhaust_fan_2?.rpm    ?? prev.exhaustFan2Rpm,
+            exhaustFan3Rpm:    d.exhaust_fan_3?.rpm    ?? prev.exhaustFan3Rpm,
+            exhaustFan4Rpm:    d.exhaust_fan_4?.rpm    ?? prev.exhaustFan4Rpm,
+            intakeFan1Rpm:     d.intake_fan_1?.rpm     ?? prev.intakeFan1Rpm,
+            intakeFan2Rpm:     d.intake_fan_2?.rpm     ?? prev.intakeFan2Rpm,
+            intakeFan3Rpm:     d.intake_fan_3?.rpm     ?? prev.intakeFan3Rpm,
+            intakeFan4Rpm:     d.intake_fan_4?.rpm     ?? prev.intakeFan4Rpm,
+            intakeFan5Rpm:     d.intake_fan_5?.rpm     ?? prev.intakeFan5Rpm,
+            intakeFan6Rpm:     d.intake_fan_6?.rpm     ?? prev.intakeFan6Rpm,
+            intakeFan7Rpm:     d.intake_fan_7?.rpm     ?? prev.intakeFan7Rpm,
+            intakeFan8Rpm:     d.intake_fan_8?.rpm     ?? prev.intakeFan8Rpm,
+            intakeFan9Rpm:     d.intake_fan_9?.rpm     ?? prev.intakeFan9Rpm,
+            intakeFan10Rpm:    d.intake_fan_10?.rpm    ?? prev.intakeFan10Rpm,
+            fansExhaustSpeed:  d.fans?.exhaust_speed   ?? prev.fansExhaustSpeed,
+            fansIntakeSpeed:   d.fans?.intake_speed    ?? prev.fansIntakeSpeed,
           }))
           return
         }

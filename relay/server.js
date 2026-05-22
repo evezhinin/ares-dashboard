@@ -518,6 +518,18 @@ wss.on('connection', (ws, req) => {
       const msg = safeJsonParse(raw)
       if (!msg) return
 
+      if (msg.type === 'internal_sensor_readings') {
+        const d = msg.payload ?? {}
+        console.log(`[relay] internal_sensor_readings from ${robotId}:`,
+          `bays: 1=${d.bay_1?.temperature ?? '—'}°C/${d.bay_1?.humidity ?? '—'}%/${d.bay_1?.co2 ?? '—'}ppm`,
+          `2=${d.bay_2?.temperature ?? '—'}°C/${d.bay_2?.humidity ?? '—'}%/${d.bay_2?.co2 ?? '—'}ppm`,
+          `3=${d.bay_3?.temperature ?? '—'}°C/${d.bay_3?.humidity ?? '—'}%/${d.bay_3?.co2 ?? '—'}ppm`,
+          `4=${d.bay_4?.temperature ?? '—'}°C/${d.bay_4?.humidity ?? '—'}%/${d.bay_4?.co2 ?? '—'}ppm`,
+          `| exhaust fans (rpm): ${[1,2,3,4].map(n => d[`exhaust_fan_${n}`]?.rpm ?? '—').join('/')}`,
+          `| intake fans (rpm): ${[1,2,3,4,5,6,7,8,9,10].map(n => d[`intake_fan_${n}`]?.rpm ?? '—').join('/')}`,
+        )
+      }
+
       const normalized = normalizeRobotMessage(msg, robotId)
       if (!normalized) return
 
