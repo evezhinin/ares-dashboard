@@ -518,9 +518,9 @@ wss.on('connection', (ws, req) => {
       const msg = safeJsonParse(raw)
       if (!msg) return
 
-      if (msg.type === 'internal_sensors') {
+      if (msg.type === 'internal_sensor_readings') {
         const d = msg.payload ?? {}
-        console.log(`[relay] internal_sensors from ${robotId}:`,
+        console.log(`[relay] internal_sensor_readings from ${robotId}:`,
           `bays: 1=${d.bay_1?.temperature ?? '—'}°C/${d.bay_1?.humidity ?? '—'}%/${d.bay_1?.co2 ?? '—'}ppm`,
           `2=${d.bay_2?.temperature ?? '—'}°C/${d.bay_2?.humidity ?? '—'}%/${d.bay_2?.co2 ?? '—'}ppm`,
           `3=${d.bay_3?.temperature ?? '—'}°C/${d.bay_3?.humidity ?? '—'}%/${d.bay_3?.co2 ?? '—'}ppm`,
